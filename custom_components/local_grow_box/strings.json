@@ -1,0 +1,36 @@
+{
+    "config": {
+        "step": {
+            "user": {
+                "title": "Set up Local Grow Box",
+                "description": "Configure your grow box sensors and devices.",
+                "data": {
+                    "name": "Grow Box Name",
+                    "light_entity": "Light Switch Entity",
+                    "fan_entity": "Fan/Ventilation Entity",
+                    "temp_sensor": "Temperature Sensor",
+                    "humidity_sensor": "Humidity Sensor"
+                }
+            }
+        },
+        "error": {
+            "cannot_connect": "Failed to connect",
+            "unknown": "Unexpected error"
+        },
+        "abort": {
+            "already_configured": "Device is already configured"
+        }
+    },
+    "entity": {
+        "select": {
+            "phase": {
+                "state": {
+                    "seedling": "Seedling (18/6)",
+                    "vegetative": "Vegetative (18/6)",
+                    "flowering": "Flowering (12/12)",
+                    "drying": "Drying (Off)"
+                }
+            }
+        }
+    }
+}
