@@ -1,6 +1,6 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg?style=for-the-badge)](https://github.com/hacs/integration)
-[![github_release](https://img.shields.io/github/v/release/low-streaming/local_growbox?style=for-the-badge)](https://github.com/low-streaming/local_growbox/releases)
-[![github_license](https://img.shields.io/github/license/low-streaming/local_growbox?style=for-the-badge)](https://github.com/low-streaming/local_growbox/blob/main/LICENSE)
+[![github_release](https://img.shields.io/github/v/release/low-streaming/local_growbox?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
+[![github_license](https://img.shields.io/github/license/low-streaming/local_growbox?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
 # Local Grow Box Integration 🌿
 
@@ -49,7 +49,7 @@ Verfolge den Lebenszyklus deiner Pflanze vom Keimling bis zur Veredelung (Curing
 ### Option 1: HACS (Empfohlen)
 1.  Öffne **HACS** in Home Assistant.
 2.  Klicke oben rechts auf das Menü (3 Punkte) -> **Benutzerdefinierte Repositories**.
-3.  Füge diese URL hinzu: `https://github.com/low-streaming/local_growbox`
+3.  Füge diese URL hinzu: `https://github.com/openkairo/GrowRoom_Local`
 4.  Wähle als Kategorie: **Integration**.
 5.  Klicke auf **Hinzufügen** und suche dann nach **"Local Grow Box"**.
 6.  Installieren und Home Assistant **neustarten**.
@@ -169,7 +169,7 @@ Track your plant's lifecycle from Seedling to Curing.
 ### Option 1: HACS (Recommended)
 1.  Open **HACS** in Home Assistant.
 2.  Click the menu (3 dots) top right -> **Custom repositories**.
-3.  Add this URL: `https://github.com/low-streaming/local_growbox`
+3.  Add this URL: `https://github.com/openkairo/GrowRoom_Local`
 4.  Category: **Integration**.
 5.  Click **Add** and search for **"Local Grow Box"**.
 6.  Install and **Restart** Home Assistant.
