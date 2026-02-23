@@ -2,7 +2,7 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿 (v2.1.2)
+# Local Grow Box Integration 🌿 (v2.1.3)
 
 **[🇩🇪 Deutsch](#-deutsch) | [🇬🇧 English](#-english)**
 
