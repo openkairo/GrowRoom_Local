@@ -59,7 +59,7 @@ Verwalte mehrere Zelte oder Boxen in einer einzigen Home Assistant Instanz.
 ### Option 1: HACS (Empfohlen)
 1.  Öffne **HACS** in Home Assistant.
 2.  Klicke oben rechts auf das Menü (3 Punkte) -> **Benutzerdefinierte Repositories**.
-3.  Füge diese URL hinzu: `https://github.com/low-streaming/local_growbox`
+3.  Füge diese URL hinzu: `https://github.com/openkairo/GrowRoom_Local`
 4.  Wähle als Kategorie: **Integration**.
 5.  Klicke auf **Hinzufügen** und suche dann nach **"Local Grow Box"**.
 6.  Installieren und Home Assistant **neustarten**.
@@ -189,7 +189,7 @@ Manage multiple tents or boxes within a single Home Assistant instance.
 ### Option 1: HACS (Recommended)
 1.  Open **HACS** in Home Assistant.
 2.  Click the menu (3 dots) top right -> **Custom repositories**.
-3.  Add this URL: `https://github.com/low-streaming/local_growbox`
+3.  Add this URL: `https://github.com/openkairo/GrowRoom_Local`
 4.  Category: **Integration**.
 5.  Click **Add** and search for **"Local Grow Box"**.
 6.  Install and **Restart** Home Assistant.
