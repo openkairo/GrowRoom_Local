@@ -2,7 +2,7 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿
+# Local Grow Box Integration 🌿 (v2.1.2)
 
 **[🇩🇪 Deutsch](#-deutsch) | [🇬🇧 English](#-english)**
 
@@ -12,45 +12,48 @@
 
 Die **Local Grow Box** Integration verwandelt dein Home Assistant in eine vollautomatische Grow-Room-Steuerung. Sie verwaltet Lichtzyklen, Klima (VPD), Bewässerung und verfolgt die Wachstumsphasen über ein schickes, modernes Dashboard.
 
-## ✨ Hauptfunktionen
+## ✨ Hauptfunktionen (v2.1.2)
 
-### 1. **Phasen-Management** 🌱
-Verfolge den Lebenszyklus deiner Pflanze vom Keimling bis zur Veredelung (Curing).
--   **Automatischer Tageszähler:** Berechnet den aktuellen Tag basierend auf dem Startdatum.
--   **Phasen-Profile:** Vorkonfigurierte Lichtstunden für jede Phase (z.B. 18/6 für Wachstum, 12/12 für Blüte).
--   **Visuelle Timeline:** Sehe auf einen Blick, wo sich deine Pflanze befindet.
+### 1. **Modernes Dashboard (Neu!)** 🖥️
+Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
+-   **Interaktive Tabs:** Übersicht, Statistiken, Geräte-Konfiguration, Phasen, Protokoll und Hilfe.
+-   **Live-Karten:** Dynamische Visualisierung von Temperatur, Luftfeuchte (RLF), VPD und Bodenfeuchte.
+-   **Status-Badges:** Sofortige Rückmeldung, ob das System online ist oder die Automatik pausiert wurde.
 
-### 2. **Smarter Lichtzyklus** 💡
--   **Automatische Steuerung:** Schaltet dein Licht basierend auf der aktuellen Phase AN/AUS.
--   **Flexible Startzeit:** Lege fest, wann der "Tag" beginnt (z.B. 18:00 Uhr), um Stromkosten zu sparen oder Hitze zu vermeiden.
--   **Timer-Anzeige:** Zeigt im Dashboard exakt an, wie lange das Licht noch an bleibt.
+### 2. **Phasen-Management & Timeline** 🌱
+Verfolge den Lebenszyklus deiner Pflanze präzise.
+-   **Phasen-Profile:** Vorkonfigurierte Lichtstunden (Keimling, Wachstum, Blüte, Trocknen, Veredeln).
+-   **Automatischer Tageszähler:** Berechnet seit dem Startdatum exakt den aktuellen Tag des Grows.
+-   **Manueller Phasenwechsel:** Phase direkt im Dashboard ändern, die Automatik passt sich sofort an.
 
-### 3. **Klima-Kontrolle & VPD** 🌪️
--   **VPD-Berechnung:** Berechnet das Vapor Pressure Deficit in Echtzeit aus Temperatur und Luftfeuchtigkeit.
--   **Smarte Abluft:** Steuert deinen Lüfter automatisch, um optimale Bedingungen zu schaffen.
--   **Info-Tab:** Erklärungen zu idealen VPD-Werten für jede Phase.
+### 3. **Intelligente Klimasteuerung (VPD)** 🌪️
+-   **Echtzeit-VPD:** Automatische Berechnung des Sättigungsdefizits (VPD) aus Temperatur und Luftfeuchte.
+-   **Zielwert-Überwachung:** Das System erkennt, ob dein VPD im optimalen Bereich für die aktuelle Phase liegt.
+-   **Smarte Abluft:** Steuert den Lüfter basierend auf Schwellenwerten für Temperatur und Feuchtigkeit.
 
-### 4. **Intelligentes Bewässerungssystem** 💧
--   **Bodenfeuchte-Trigger:** Aktiviert die Pumpe nur, wenn die Erde zu trocken ist.
--   **Präzise Dosierung:** Die Pumpe läuft für exakt die eingestellte Zeit (z.B. 5 Sekunden).
--   **Anti-Staunässe (Einwirkzeit):** Nach dem Gießen macht das System zwingend **15 Minuten Pause**, damit sich das Wasser verteilen kann.
+### 4. **Smarte Bewässerung & Bodenfeuchte** 💧
+-   **Bodenfeuchte-Logik:** Die Pumpe startet automatisch, wenn der eingestellte Mindestwert unterschritten wird.
+-   **Präzise Dosierung:** Einstellbare Laufzeit für die Pumpe in Sekunden.
+-   **Staunässe-Schutz:** Erzwungene **15 Minuten Pause** nach jeder Bewässerung, damit der Sensor korrekte Werte liefert.
 
-### 5. **Kamera & Bild-Upload** 📷
--   **Live-Kamera:** Binde eine Home Assistant Kamera-Entität ein.
--   **Bild-Upload:** Kein Live-Stream? Lade einfach ein Foto direkt über das Dashboard hoch. Das Bild wird gespeichert und angezeigt.
+### 5. **Kamera & Bild-Archiv** 📷
+-   **Livestream:** Einbindung deiner Home Assistant Kamera direkt ins Dashboard.
+-   **Manueller Upload:** Lade Fotos via Dashboard hoch, um den Fortschritt auch ohne Live-Kamera zu dokumentieren.
+-   **Cache-Busting:** Das Dashboard zeigt immer das aktuellste Bild ohne Browser-Refresh.
 
-### 6. **Multi-Box Support (Neu in v2.0!)** 📦
-Verwalte mehrere Zelte oder Boxen in einer einzigen Home Assistant Instanz.
-- Einfach weitere "Local Grow Box" Integrationen über die Weboberfläche hinzufügen.
-- Jede Box hat ihr eigenes Dashboard, eigene Sensoren und eigenen Namen.
+### 6. **Multi-Box Support** 📦
+Verwalte mehrere Zelte oder Boxen gleichzeitig.
+-   Füge einfach mehrere Instanzen der Integration hinzu.
+-   Jede Box bekommt ihr eigenes Dashboard und eigene Einstellungen.
 
-### 7. **Plug & Play ESPHome Display (Neu in v2.0!)** 📺
--   **Zero-Config:** Die Integration sucht im Netzwerk automatisch nach passenden ESPHome Displays.
--   **Auto-Rotation:** Das Display wechselt automatisch alle 10 Sekunden durch bis zu 5 verbundene Growboxen!
--   **Live-Telemetrie:** Zeigt Temperatur, Luftfeuchte, Bodenfeuchte, VPD, Licht-Status und den Abluft-Lüfter direkt am Zelt an.
+### 7. **Plug & Play ESPHome Display** 📺
+-   **Status am Zelt:** Zeigt alle wichtigen Werte auf einem ESPHome-basierten Display an.
+-   **Auto-Rotation:** Wechselt bei mehreren Boxen automatisch alle 10 Sekunden durch die Ansichten.
+-   **Keine Konfiguration:** Die Integration findet kompatible Displays im Netzwerk automatisch.
 
-### 8. **Master-Steuerung** ⚡
--   **Master-Switch:** Ein zentraler Schalter, um die gesamte Automatik (Licht, Wasser, Klima) zu aktivieren oder zu pausieren.
+### 8. **Detaillierte Statistiken & Logs** 📊
+-   **24h-Graphen:** Verfolge Temperatur, Feuchtigkeit und VPD im zeitlichen Verlauf direkt im Dashboard.
+-   **Ereignis-Protokoll:** Eine saubere Liste aller Automatik-Aktionen (Licht an/aus, Pumpe gestartet etc.).
 
 ---
 
@@ -58,213 +61,97 @@ Verwalte mehrere Zelte oder Boxen in einer einzigen Home Assistant Instanz.
 
 ### Option 1: HACS (Empfohlen)
 1.  Öffne **HACS** in Home Assistant.
-2.  Klicke oben rechts auf das Menü (3 Punkte) -> **Benutzerdefinierte Repositories**.
-3.  Füge diese URL hinzu: `https://github.com/openkairo/GrowRoom_Local`
-4.  Wähle als Kategorie: **Integration**.
-5.  Klicke auf **Hinzufügen** und suche dann nach **"Local Grow Box"**.
-6.  Installieren und Home Assistant **neustarten**.
+2.  Klicke oben rechts auf die 3 Punkte -> **Benutzerdefinierte Repositories**.
+3.  URL: `https://github.com/openkairo/GrowRoom_Local` | Kategorie: **Integration**.
+4.  Suche nach **"Local Grow Box"** und installiere die neueste Version.
+5.  Home Assistant **neustarten**.
 
 ### Option 2: Manuell
-1.  Lade den Ordner `custom_components/local_grow_box` aus diesem Repository herunter.
-2.  Kopiere ihn in dein Home Assistant Verzeichnis: `/config/custom_components/`.
+1.  Lade den Ordner `custom_components/local_grow_box` herunter.
+2.  Kopiere ihn in dein `/config/custom_components/` Verzeichnis.
 3.  Starte Home Assistant neu.
 
 ## ⚙️ Einrichtung
-1.  Gehe zu **Einstellungen -> Geräte & Dienste**.
-2.  Klicke auf **Integration hinzufügen**.
-3.  Suche nach **"Local Grow Box"** und wähle es aus.
-4.  Gib deiner Box einen Namen.
-5.  Ein neuer Menüpunkt **"Grow Room"** erscheint in deiner Seitenleiste.
+1.  **Einstellungen -> Geräte & Dienste -> Integration hinzufügen**.
+2.  Suche nach **"Local Grow Box"**.
+3.  Konfiguriere deine Entitäten (Licht, Sensoren, Pumpe).
+4.  Der Menüpunkt **"Grow Room"** erscheint in deiner Seitenleiste.
 
----
-
-## 🖥️ Das Dashboard
-
-### **Übersicht (Overview)**
-Deine Kommandozentrale.
--   **Live Status:** Alle Werte (Temp, RLF, VPD, Boden) auf einen Blick.
--   **Steuerung:** Master-Switch, manuelle Pumpe, Bild-Upload.
--   **Navigation:** Einfache Tabs (Mobil-optimiert).
-
-### **Geräte & Config**
-Hier verknüpfst du deine Home Assistant Geräte.
--   **Sensoren & Aktoren:** Wähle deine Entitäten (Licht, Lüfter, Sensoren).
--   **Parameter:** Setze Zielwerte für Temperatur, Feuchtigkeit und Bewässerung.
--   **Zeitplan:** Stelle die Startstunde für das Licht ein.
-
-### **Phasen**
-Die Timeline deiner Pflanze.
--   Passe das Startdatum an, um den Tageszähler zu korrigieren.
--   Wechsle die Phase (z.B. von Wachstum zu Blüte), um den Lichtzyklus automatisch anzupassen.
-
-### **Info / Hilfe**
-Nützliche Informationen.
--   VPD-Tabelle für alle Phasen.
--   Erklärungen zu den Buttons und Funktionen.
-
----
-
-## 🗺️ Roadmap & Vision 🚀
-
-Wir haben Großes vor! Hier ist ein Ausblick auf kommende Features:
-
-### Phase 1: Deep Data 📊
--   **Stromkosten-Rechner:** Erfasse den exakten Verbrauch (kWh) und die Kosten pro Grow-Zyklus.
--   **Ernte-Logbuch:** Dokumentiere Trockengewicht, Qualität und Curing-Verlauf.
--   **Dünge-Planer:** Integrierter Kalender für Nährstoffgaben.
-
-### Phase 2: AI & Vision 🤖
--   **Zeitraffer-Generator:** Erstellt automatisch ein Video aus den täglichen Snapshots deiner Pflanze.
--   **KI-Pflanzendoktor:** Analyse von Blattproblemen oder Mängeln direkt über das Kamerabild.
--   **Smart Notifications:** Push-Nachrichten via Telegram/Discord (z.B. "Tank leer", "VPD kritisch").
-
-### Phase 3: Pro Hardware ⚡
--   **CO2-Steuerung:** Integration von CO2-Sensoren und Magnetventilen.
--   **Sonnenaufgangs-Simulation:** Sanftes Dimmen von LED-Panels (PWM/0-10V).
--   **Hydroponik-Support:** pH- und EC-Wert Überwachung für rezirkulierende Systeme.
-
-### 💛 Support & Spenden
-
-Gefällt dir dieses Projekt? Ich entwickle es in meiner Freizeit.  
-Wenn du mich unterstützen möchtest, freue ich mich über einen Kaffee! ☕
-
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR" target="_blank">
-  <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=for-the-badge&logo=paypal" alt="Donate with PayPal" />
-</a>
-
-**PayPal:** info@low-streaming.de
-
-
----
 ---
 
 # 🇬🇧 English
 
 The **Local Grow Box** integration turns your Home Assistant instance into a fully automated Grow Room controller. It manages light cycles, climate (VPD), watering, and tracks growth phases through a sleek, modern dashboard panel.
 
-## ✨ Key Features
+## ✨ Key Features (v2.1.2)
 
-### 1. **Phase Management** 🌱
-Track your plant's lifecycle from Seedling to Curing.
--   **Automated Day Counter:** Calculates the current day based on the start date.
--   **Phase Profiles:** Pre-configured light schedules (e.g., 18/6 for Veg, 12/12 for Flower).
--   **Visual Timeline:** See exactly where your plant is in its lifecycle.
+### 1. **Modern Dashboard (Improved!)** 🖥️
+A completely redesigned, dark-themed tech dashboard.
+-   **Interactive Tabs:** Overview, Statistics, Device Config, Phases, Logs, and Help.
+-   **Live Data:** Real-time visualization of Temperature, Humidity, VPD, and Soil Moisture.
+-   **Visual Feedback:** High-contrast status badges for system and automation status.
 
-### 2. **Smart Light Cycle** 💡
--   **Automated Control:** Turns your light ON/OFF based on the current phase.
--   **Flexible Start Time:** Set a "Start Hour" (e.g., 18:00) to shift the "day" to off-peak hours or cooler times.
--   **Timer Display:** Shows exactly how long the light will remain ON.
+### 2. **Phase Management & Timeline** 🌱
+Precision-track your plant's lifecycle.
+-   **Phase Profiles:** Pre-configured schedules (Seedling, Veg, Flower, Drying, Curing).
+-   **Automated Day Counter:** Shows exact day of grow since the start date.
+-   **Instant Phase Switch:** Change phases directly from the UI, automation updates immediately.
 
-### 3. **Climate Control & VPD** 🌪️
--   **VPD Calculation:** Real-time Vapor Pressure Deficit calculation based on Temp/Humidity.
--   **Smart Ventilation:** Controls your exhaust fan to maintain optimal ranges.
--   **Info Tab:** Reference chart for ideal VPD values.
+### 3. **Smart Climate & VPD** 🌪️
+-   **Real-time VPD:** Calculated from Temp and Rh to ensure optimal transpiration.
+-   **Target Range Monitoring:** Visual indicators show if your VPD is optimal for the current phase.
+-   **Intelligent Ventilation:** Controls your exhaust fan based on temperature and humidity thresholds.
 
-### 4. **Intelligent Watering System** 💧
--   **Soil Moisture Trigger:** Activates the pump only when soil is too dry.
--   **Precision Dosing:** Run the pump for exact seconds (e.g., 5s).
--   **Soak Time:** Enforces a **15-minute pause** after watering to allow moisture to disperse before re-measuring.
+### 4. **Smart Irrigation** 💧
+-   **Moisture Trigger:** Pump starts automatically when soil moisture drops below your target.
+-   **Precision Pulse:** Set exact pump run duration in seconds.
+-   **Soak Logic:** A mandatory **15-minute wait** after each pulse ensures even water distribution.
 
-### 5. **Camera & Image Upload** 📷
--   **Live Feed:** Integrate a Home Assistant camera entity.
--   **Image Upload:** No camera? Upload a photo directly via the dashboard. It stays saved and displayed.
+### 5. **Camera & Archive** 📷
+-   **Live Stream:** Integrated HA camera feed directly on the dashboard.
+-   **Snapshots:** Manually upload images from the UI to track progress without a permanent camera.
 
-### 6. **Multi-Box Support (New in v2.0!)** 📦
-Manage multiple tents or boxes within a single Home Assistant instance.
--   Simply add another "Local Grow Box" integration via the UI.
--   Each box gets its own isolated dashboard, sensors, and configuration.
+### 6. **Multi-Box & Multi-Instance** 📦
+Manage multiple grow tents in one place.
+-   Add multiple instances of the integration.
+-   Each instance has its own isolated dashboard and sensors.
 
-### 7. **Plug & Play ESPHome Display (New in v2.0!)** 📺
--   **Zero-Config:** The integration automatically discovers compatible ESPHome displays on the network.
--   **Auto-Rotation:** The display automatically cycles through up to 5 connected grow boxes every 10 seconds!
--   **Live Telemetry:** Shows Temperature, Humidity, Soil Moisture, VPD, Light status, and Exhaust Fan status right at your tent.
+### 7. **Plug & Play ESPHome Display** 📺
+-   **Tent-side Monitoring:** View status on an external ESPHome display.
+-   **Auto-Rotate:** Automatically cycles through up to 5 grow boxes every 10 seconds.
+-   **Auto-Discovery:** No manual setup required for the display communication.
 
-### 8. **Master Control** ⚡
--   **Master Switch:** A central switch to toggle the entire automation logic (Light, Water, Climate) ON or OFF.
+### 8. **Statistics & Event Log** 📊
+-   **History Charts:** 24-hour graphs for all critical telemetry.
+-   **Action Log:** A detailed log of all automated actions (lights, irrigation, ventilation).
 
 ---
 
 ## 🚀 Installation
 
 ### Option 1: HACS (Recommended)
-1.  Open **HACS** in Home Assistant.
-2.  Click the menu (3 dots) top right -> **Custom repositories**.
-3.  Add this URL: `https://github.com/openkairo/GrowRoom_Local`
-4.  Category: **Integration**.
-5.  Click **Add** and search for **"Local Grow Box"**.
-6.  Install and **Restart** Home Assistant.
-
-### Option 2: Manual
-1.  Download the `custom_components/local_grow_box` folder from this repository.
-2.  Copy it to your Home Assistant directory: `/config/custom_components/`.
-3.  Restart Home Assistant.
+1.  Open **HACS** -> **Custom repositories**.
+2.  Add: `https://github.com/lopenkairo/GrowRoom_Local` (Category: **Integration**).
+3.  Install **"Local Grow Box"**.
+4.  **Restart** Home Assistant.
 
 ## ⚙️ Setup
-1.  Go to **Settings -> Devices & Services**.
-2.  Click **Add Integration**.
-3.  Search for **"Local Grow Box"** and select it.
-4.  Name your box.
-5.  A new item **"Grow Room"** will appear in your sidebar.
+1.  Go to **Settings -> Devices & Services -> Add Integration**.
+2.  Search for **"Local Grow Box"**.
+3.  Map your entities (Switch, Sensors, Camera).
+4.  Look for **"Grow Room"** in your sidebar.
 
 ---
 
-## 🖥️ The Dashboard
-
-### **Overview**
-Your command center.
--   **Live Status:** Monitor Temp, Humidity, VPD, Soil Moisture.
--   **Controls:** Master Switch, Manual Pump, Image Upload.
--   **Navigation:** Simple, mobile-optimized tabs.
-
-### **devices & Config**
-Map your hardware.
--   **Sensors & Actuators:** Select your entities (Light, Fan, Sensors).
--   **Parameters:** Set target values for climate and watering.
--   **Schedule:** Define the Light Start Hour.
-
-### **Phases**
-The timeline.
--   Adjust the Start Date to correct the day counter.
--   Switch phases (e.g., from Veg to Flower) to automatically update the light schedule.
-
-### **Info / Help**
-Useful resources.
--   VPD Chart for all phases.
--   Explanations of buttons and logic.
+## 🗺️ Roadmap 🚀
+- **Energy Tracking:** Monthly cost estimation based on light/fan usage.
+- **Nutrient Diary:** Keep track of your feeding schedule.
+- **AI Plant Health (WIP):** Basic leaf color analysis from snapshots.
 
 ---
 
-## 🗺️ Roadmap & Vision 🚀
-
-We have big plans! Here is a sneak peek at what's coming:
-
-### Phase 1: Deep Data 📊
--   **Energy Calculator:** Track exact power usage (kWh) and cost per grow cycle.
--   **Harvest Log:** Document dry weight, quality, and curing progress.
--   **Nutrient Planner:** Integrated calendar for fertilizer schedules.
-
-### Phase 2: AI & Vision 🤖
--   **Auto-Timelapse:** Generate a video from your plant's daily snapshots.
--   **AI Plant Doctor:** Analyze leaf issues or deficiencies directly via camera images.
--   **Smart Notifications:** Push alerts via Telegram/Discord (e.g., "Tank empty", "VPD critical").
-
-### Phase 3: Pro Hardware ⚡
--   **CO2 Control:** Integration of CO2 sensors and solenoids.
--   **Sunrise Simulation:** Smooth dimming for LED panels (PWM/0-10V).
--   **Hydroponics Support:** pH and EC monitoring for recirculating systems.
-
-### 💛 Support & Donation
-
-Do you like this project? I develop it in my free time.  
-If you want to support me, I'd be happy about a coffee! ☕
-
-<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR" target="_blank">
-  <img src="https://img.shields.io/badge/Donate-PayPal-blue.svg?style=for-the-badge&logo=paypal" alt="Donate with PayPal" />
-</a>
-
-**PayPal:** info@low-streaming.de
-
-
----
+## 💛 Support
+If you like this project, feel free to support its development! ☕
+PayPal: info@low-streaming.de
 
 *Made with ❤️ for happy plants.*
