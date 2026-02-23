@@ -3,8 +3,10 @@ class LocalGrowBoxPanel extends HTMLElement {
         super();
         this.attachShadow({ mode: 'open' });
         this._initialized = false;
-        this._activeTab = 'overview'; // 'overview', 'settings', 'phases'
+        this._activeTab = 'overview'; // 'overview', 'statistics', 'settings', 'phases'
         this._draft = {}; // entryId -> { key: value }
+        this.historyData = {};
+        this.fetchingHistory = {};
     }
 
     set hass(hass) {
@@ -357,13 +359,14 @@ class LocalGrowBoxPanel extends HTMLElement {
                         flex-direction: column;
                         align-items: flex-start;
                         gap: 12px;
+                        padding: 12px 16px;
                     }
                     .tabs {
                         margin-left: 0;
                         width: 100%;
                         overflow-x: auto;
                         justify-content: flex-start;
-                        padding-bottom: 4px; /* Space for scrollbar */
+                        padding-bottom: 8px; /* Space for scrollbar */
                         background: transparent;
                         border: none;
                         padding: 0;
@@ -372,12 +375,18 @@ class LocalGrowBoxPanel extends HTMLElement {
                         flex-shrink: 0;
                         font-size: 11px;
                         padding: 8px 12px;
-                        background: rgba(255,255,255,0.05); /* Ensure visibility */
-                        margin-right: 4px;
+                        background: rgba(255,255,255,0.08); /* Ensure visibility */
+                        margin-right: 6px;
                         white-space: nowrap;
                     }
                     .tab.active {
                         background: var(--primary-color);
+                    }
+                    .content { padding: 12px; }
+                    .card-body { padding: 12px; }
+                    .controls {
+                        grid-template-columns: 1fr;
+                        gap: 8px;
                     }
                 }
             </style>
@@ -388,8 +397,10 @@ class LocalGrowBoxPanel extends HTMLElement {
                 </div>
                 <div class="tabs">
                     <div class="tab active" data-tab="overview">Übersicht</div>
+                    <div class="tab" data-tab="statistics">Statistiken</div>
                     <div class="tab" data-tab="settings">Geräte & Config</div>
                     <div class="tab" data-tab="phases">Phasen</div>
+                    <div class="tab" data-tab="logs">Protokoll</div>
                     <div class="tab" data-tab="info">Info / Hilfe</div>
                 </div>
             </div>
@@ -452,10 +463,14 @@ class LocalGrowBoxPanel extends HTMLElement {
 
         if (this._activeTab === 'overview') {
             this._renderOverview(container);
+        } else if (this._activeTab === 'statistics') {
+            this._renderStatistics(container);
         } else if (this._activeTab === 'settings') {
             this._renderSettings(container);
         } else if (this._activeTab === 'phases') {
             this._renderPhases(container);
+        } else if (this._activeTab === 'logs') {
+            this._renderLogs(container);
         } else if (this._activeTab === 'info') {
             this._renderInfo(container);
         }
@@ -564,10 +579,11 @@ class LocalGrowBoxPanel extends HTMLElement {
             const imgVer = device.options.image_version || 0;
             let imgUrl = `/local/local_grow_box_images/${device.id}.jpg?v=${imgVer}`;
             let isLive = false;
+            let camStateObj = null;
             if (device.options.camera_entity) {
-                const cam = this._hass.states[device.options.camera_entity];
-                if (cam) {
-                    imgUrl = cam.attributes.entity_picture;
+                camStateObj = this._hass.states[device.options.camera_entity];
+                if (camStateObj) {
+                    imgUrl = camStateObj.attributes.entity_picture;
                     isLive = true;
                 }
             }
@@ -576,7 +592,7 @@ class LocalGrowBoxPanel extends HTMLElement {
             const getVal = (entity) => {
                 if (!entity) return null;
                 const s = this._hass.states[entity];
-                return s && !isNaN(s.state) ? parseFloat(s.state) : null;
+                return s && !isNaN(s.state) ? Math.round(parseFloat(s.state) * 100) / 100 : null;
             }
 
             const temp = getVal(device.options.temp_sensor);
@@ -682,8 +698,24 @@ class LocalGrowBoxPanel extends HTMLElement {
             q('.card-image').onclick = (e) => {
                 // Prevent click if clicking the select or badge
                 if (e.target.tagName === 'SELECT' || e.target.closest('.phase-select')) return;
-                this._openCameraModal(imgUrl, device.name);
+                this._openCameraModal(imgUrl, device.name, camStateObj);
             };
+
+            // Inject Livestream into Card if Live
+            if (isLive && camStateObj) {
+                const imgContainer = q('.card-image');
+                const oldImg = q('img');
+                if (oldImg) oldImg.style.display = 'none';
+
+                const stream = document.createElement('ha-camera-stream');
+                stream.hass = this._hass;
+                stream.stateObj = camStateObj;
+                stream.muted = true;
+                stream.allowExoplayer = true;
+                stream.style.cssText = "width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; position:absolute; top:0; left:0; opacity:0.8;";
+
+                imgContainer.insertBefore(stream, imgContainer.firstChild);
+            }
 
             // Phase Change Event
             const phaseSelect = q(`#phase-select-${device.id}`);
@@ -715,23 +747,48 @@ class LocalGrowBoxPanel extends HTMLElement {
         container.appendChild(grid);
     }
 
-    _openCameraModal(url, title) {
+    _openCameraModal(url, title, camStateObj = null) {
         const modal = this.shadowRoot.getElementById('camera-modal');
-        const img = this.shadowRoot.getElementById('modal-img');
+        const content = modal.querySelector('.modal-content');
         const txt = this.shadowRoot.getElementById('modal-title');
 
-        // Refresh image to ensure live content
-        const freshUrl = url.includes('?') ? url + '&t=' + Date.now() : url + '?t=' + Date.now();
-        img.src = freshUrl;
+        // Remove old media
+        const oldImg = this.shadowRoot.getElementById('modal-img');
+        if (oldImg) oldImg.remove();
+        const oldStream = this.shadowRoot.getElementById('modal-stream');
+        if (oldStream) oldStream.remove();
+
+        if (camStateObj) {
+            const stream = document.createElement('ha-camera-stream');
+            stream.id = 'modal-stream';
+            stream.hass = this._hass;
+            stream.stateObj = camStateObj;
+            stream.muted = true;
+            stream.controls = true;
+            stream.allowExoplayer = true;
+            stream.style.cssText = "width:100%; height:auto; display:block; border-radius:8px;";
+            content.insertBefore(stream, txt);
+        } else {
+            const img = document.createElement('img');
+            img.id = 'modal-img';
+            img.style.cssText = "width:100%; height:auto; display:block; border-radius:8px;";
+            img.src = url.includes('?') ? url + '&t=' + Date.now() : url + '?t=' + Date.now();
+            content.insertBefore(img, txt);
+        }
 
         txt.innerText = title;
         modal.classList.add('visible');
 
-        // Close logic
+        const cleanup = () => {
+            modal.classList.remove('visible');
+            const toRemove = this.shadowRoot.getElementById('modal-stream');
+            if (toRemove) toRemove.remove(); // Stop stream on close
+        };
+
         const close = modal.querySelector('.close-modal');
-        close.onclick = () => modal.classList.remove('visible');
+        close.onclick = cleanup;
         modal.onclick = (e) => {
-            if (e.target === modal) modal.classList.remove('visible');
+            if (e.target === modal) cleanup();
         }
     }
 
@@ -1135,167 +1192,119 @@ class LocalGrowBoxPanel extends HTMLElement {
         input.click();
     }
 
-    async _renderLog(container) {
-        container.innerHTML = '<div style="padding:24px; text-align:center;">Lade Protokoll...</div>';
-
-        // 1. Collect entities and map to devices
-        const entities = [];
-        const entityMap = {}; // entity_id -> { devId, type }
-
-        this._devices.forEach(d => {
-            const add = (eid, type) => {
-                if (eid) {
-                    entities.push(eid);
-                    entityMap[eid] = { devId: d.id, type: type };
-                }
-            };
-            add(d.entities.light, 'light');
-            add(d.entities.pump || d.options.pump_entity, 'pump');
-            add(d.entities.fan || d.options.fan_entity, 'fan');
-            add(d.entities.phase, 'phase');
-        });
-
-        if (entities.length === 0) {
-            container.innerHTML = '<div style="padding:24px; text-align:center;">Keine Geräte konfiguriert für das Protokoll.</div>';
+    async _renderLogs(container) {
+        if (this._devices.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">Keine Grow Box gefunden.</div>';
             return;
         }
 
-        // 2. Fetch (Last 48 hours to ensure we see recent events)
-        const end = new Date();
-        const start = new Date(end.getTime() - 48 * 60 * 60 * 1000); // 48h
+        container.innerHTML = '<div style="padding:24px; text-align:center;">Lade Protokoll...</div>';
 
         try {
-            // Fix: Remove end_time to implicitly mean "now". Ensure start_time is valid ISO.
-            const rawEvents = await this._hass.callWS({
-                type: 'logbook/get_events',
-                start_time: start.toISOString(),
-                entity_ids: entities
-            });
-
-            // 3. Filter Noise
-            const events = (rawEvents || []).filter(e =>
-                e.state !== 'unavailable' && e.state !== 'unknown' && e.state !== '' && e.message !== 'became unavailable'
-            ).sort((a, b) => new Date(b.when) - new Date(a.when));
-
-            if (events.length === 0) {
-                container.innerHTML = '<div style="padding:24px; text-align:center;">Keine Ereignisse in den letzten 24 Stunden.</div>';
-                return;
+            // Fetch logs for all devices
+            let allLogs = [];
+            for (const device of this._devices) {
+                if (!device.entryId) continue;
+                try {
+                    const result = await this._hass.callWS({
+                        type: 'local_grow_box/get_logs',
+                        entry_id: device.entryId
+                    });
+                    if (result && result.logs) {
+                        result.logs.forEach(logLine => {
+                            allLogs.push({ devName: device.name, line: logLine });
+                        });
+                    }
+                } catch (err) {
+                    console.warn("Could not fetch logs for " + device.name, err);
+                }
             }
 
-            // 4. Render Layout
             container.innerHTML = '';
-
-            const header = document.createElement('div');
-            header.style.cssText = "padding:16px; display:flex; gap:12px; max-width:800px; margin:0 auto; flex-wrap:wrap;";
-
-            const createSelect = (opts) => {
-                const s = document.createElement('select');
-                s.style.cssText = "background:var(--card-bg); color:var(--primary-text-color); padding:8px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); flex:1; min-width:140px; outline:none; cursor:pointer;";
-                s.innerHTML = opts.map(o => `<option value="${o.val}">${o.lbl}</option>`).join('');
-                return s;
-            };
-
-            const devOpts = [{ val: 'all', lbl: 'Alle Boxen' }].concat(this._devices.map(d => ({ val: d.id, lbl: d.name })));
-            const typeOpts = [
-                { val: 'all', lbl: 'Alle Typen' },
-                { val: 'light', lbl: '💡 Licht' },
-                { val: 'pump', lbl: '💧 Wasser' },
-                { val: 'fan', lbl: '🌪️ Luft' },
-                { val: 'phase', lbl: '🌱 Phase' }
-            ];
-
-            const devSelect = createSelect(devOpts);
-            const typeSelect = createSelect(typeOpts);
-
-            header.appendChild(devSelect);
-            header.appendChild(typeSelect);
-            container.appendChild(header);
-
             const listContainer = document.createElement('div');
             listContainer.style.maxWidth = '800px';
             listContainer.style.margin = '0 auto';
-            container.appendChild(listContainer);
+            listContainer.style.background = 'var(--card-bg)';
+            listContainer.style.borderRadius = '12px';
+            listContainer.style.border = '1px solid rgba(255,255,255,0.05)';
+            listContainer.style.overflow = 'hidden';
 
-            // Render Function
-            const renderList = () => {
-                const devFilter = devSelect.value;
-                const typeFilter = typeSelect.value;
+            // Sort combined logs chronologically (newest first)
+            allLogs.sort((a, b) => {
+                const parseDate = (str) => {
+                    const match = str.match(/^\[(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})\]/);
+                    if (!match) return 0;
+                    return new Date(`${match[3]}-${match[2]}-${match[1]}T${match[4]}:${match[5]}:${match[6]}`).getTime();
+                };
+                return parseDate(b.line) - parseDate(a.line);
+            });
 
-                listContainer.innerHTML = '';
+            const header = document.createElement('div');
+            header.style.cssText = "padding:16px 20px; font-size:16px; font-weight:600; border-bottom:1px solid rgba(255,255,255,0.05); color:var(--text-primary); display:flex; align-items:center; gap:10px;";
+            header.innerHTML = '<span style="font-size:22px; opacity:0.9;">📋</span> <span>Protokoll-Historie</span>';
+            listContainer.appendChild(header);
 
-                const filtered = events.filter(ev => {
-                    const info = entityMap[ev.entity_id];
-                    if (!info) return true;
-
-                    if (devFilter !== 'all' && info.devId !== devFilter) return false;
-                    if (typeFilter !== 'all' && info.type !== typeFilter) return false;
-
-                    return true;
-                });
-
-                if (filtered.length === 0) {
-                    listContainer.innerHTML = '<div style="padding:24px; text-align:center; color:var(--text-secondary);">Keine Einträge für diesen Filter.</div>';
-                    return;
-                }
-
-                const list = document.createElement('div');
-                list.className = 'log-list';
-
-                filtered.forEach(ev => {
+            if (allLogs.length === 0) {
+                const empty = document.createElement('div');
+                empty.style.cssText = "padding:32px; text-align:center; color:var(--text-secondary);";
+                empty.innerText = "Bisher keine Ereignisse protokolliert.";
+                listContainer.appendChild(empty);
+            } else {
+                for (const entry of allLogs) {
                     const item = document.createElement('div');
-                    item.style.cssText = `
-                        background: var(--card-bg);
-                        border-bottom: 1px solid rgba(255,255,255,0.05);
-                        padding: 12px 16px;
-                        display: flex; justify-content: space-between; align-items: center; gap: 12px;
-                    `;
+                    item.style.cssText = "padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.02); display:flex; align-items:center; gap:16px; transition:background 0.2s;";
+                    item.onmouseenter = () => item.style.background = 'rgba(255,255,255,0.02)';
+                    item.onmouseleave = () => item.style.background = 'transparent';
 
-                    const dateObj = new Date(ev.when);
-                    const time = dateObj.toLocaleDateString([], { day: '2-digit', month: '2-digit' }) + ' ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let timeStr = "";
+                    let msgStr = entry.line;
 
+                    const match = entry.line.match(/^\[(.*?)\]\s+(.*)$/);
+                    if (match) {
+                        timeStr = match[1];
+                        msgStr = match[2];
+                    }
+
+                    // Choose icon based on content
                     let icon = '📝';
-                    if (ev.domain === 'light') icon = '💡';
-                    else if (ev.entity_id.includes('pump')) icon = '💧';
-                    else if (ev.entity_id.includes('fan')) icon = '🌪️';
-                    else if ((ev.domain === 'sensor' && ev.entity_id.includes('phase')) || ev.entity_id.includes('grow')) icon = '🌱';
+                    if (msgStr.includes('Licht')) icon = '💡';
+                    else if (msgStr.includes('Pumpe')) icon = '💧';
+                    else if (msgStr.includes('Abluft')) icon = '🌪️';
 
-                    let name = ev.name;
-                    if (!name || name === 'undefined') {
-                        const stateObj = this._hass.states[ev.entity_id];
-                        name = stateObj ? stateObj.attributes.friendly_name : ev.entity_id;
+                    // Highlight keywords playfully
+                    if (msgStr.includes('eingeschaltet')) {
+                        msgStr = msgStr.replace('eingeschaltet', '<span style="color:#10b981; font-weight:600;">eingeschaltet</span>');
+                    }
+                    if (msgStr.includes('ausgeschaltet')) {
+                        msgStr = msgStr.replace('ausgeschaltet', '<span style="color:#ef4444; font-weight:600;">ausgeschaltet</span>');
                     }
 
                     item.innerHTML = `
-                        <div style="display:flex; align-items:center; gap:12px; flex:1;">
-                            <span style="color:var(--text-secondary); font-size:14px; width:45px;">${time}</span>
-                            <span style="font-size:20px;">${icon}</span>
-                            <div style="display:flex; flex-direction:column;">
-                                <span style="font-weight:500;">${name}</span>
-                                <span style="font-size:12px; color:var(--text-secondary);">${ev.message || ('Zustand: ' + ev.state)}</span>
-                            </div>
+                        <div style="color:var(--text-secondary); font-size:12px; min-width:130px; text-align:right; font-variant-numeric: tabular-nums;">
+                            ${timeStr}
+                        </div>
+                        <div style="font-size:20px; line-height:1; min-width:24px; text-align:center; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">
+                            ${icon}
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:2px; flex:1;">
+                            <span style="font-size:10px; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.5px;">
+                                ${entry.devName}
+                            </span>
+                            <span style="font-size:14px; color:var(--text-primary);">
+                                ${msgStr}
+                            </span>
                         </div>
                     `;
-                    list.appendChild(item);
-                });
+                    listContainer.appendChild(item);
+                }
+            }
 
-                listContainer.appendChild(list);
-            };
-
-            devSelect.onchange = renderList;
-            typeSelect.onchange = renderList;
-
-            renderList();
+            container.appendChild(listContainer);
 
         } catch (e) {
             console.error("Log fetch failed", e);
             container.innerHTML = `<div style="color:var(--danger-color); padding:24px;">Fehler beim Laden des Protokolls: ${e.message}</div>`;
         }
-
-        // Debug Footer
-        const debugDiv = document.createElement('div');
-        debugDiv.style.cssText = "text-align:center; opacity:0.3; font-size:10px; margin-top:20px; color:var(--text-primary);";
-        debugDiv.innerHTML = `Debug: Range ${new Date(end.getTime() - 48 * 3600000).toLocaleString()} - ${end.toLocaleString()} (${entities.length} entities)`;
-        container.appendChild(debugDiv);
     }
 
     _renderInfo(container) {
@@ -1406,12 +1415,187 @@ class LocalGrowBoxPanel extends HTMLElement {
                 </div>
                 
                 <div style="text-align:center; margin-top:32px; opacity:0.5; font-size:12px;">
-                    Local Grow Box Integration v1.1
+                    Local Grow Box Integration v2.1
                 </div>
             </div>
         `;
     }
 
+    async fetchHistoryData(entityId) {
+        if (!this._hass || !entityId) return;
+        const now = new Date();
+        const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const startStr = yesterday.toISOString();
+
+        try {
+            const response = await this._hass.callApi('GET', `history/period/${startStr}?filter_entity_id=${entityId}&minimal_response`);
+            if (response && response.length > 0) {
+                this.historyData = { ...this.historyData, [entityId]: response[0] };
+            } else {
+                this.historyData = { ...this.historyData, [entityId]: [] };
+            }
+        } catch (e) {
+            console.error("Failed to fetch history for " + entityId, e);
+            this.historyData = { ...this.historyData, [entityId]: [] };
+        } finally {
+            this.fetchingHistory[entityId] = false;
+            if (this._activeTab === 'statistics') {
+                this._updateContent();
+            }
+        }
+    }
+
+    _showMoreInfo(entityId) {
+        if (!entityId) return;
+        const event = new Event('hass-more-info', { bubbles: true, composed: true });
+        event.detail = { entityId: entityId };
+        this.dispatchEvent(event);
+    }
+
+    _renderChart(entityId, colorHex, label, unit) {
+        if (!this.historyData[entityId] && !this.fetchingHistory[entityId]) {
+            this.fetchingHistory[entityId] = true;
+            this.fetchHistoryData(entityId);
+            return '<div style="height: 150px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">Lade ' + label + '...</div>';
+        }
+
+        const data = this.historyData[entityId] || [];
+        const currentState = this._hass && this._hass.states[entityId] ? this._hass.states[entityId].state : '-';
+
+        if (data.length === 0 || data.filter(d => !isNaN(parseFloat(d.state))).length === 0) {
+            return `
+                <div class="chart-row" data-entity="${entityId}" style="margin-bottom: 20px; text-align: left; cursor: pointer;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                        <h4 style="color: ${colorHex}; margin: 0; font-size: 1.0em; text-transform: uppercase;">${label}</h4>
+                        <span style="color: #fff; font-size: 1.1em; font-weight: bold;">${currentState} ${unit}</span>
+                    </div>
+                    <div style="height: 120px; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); background: rgba(0,0,0,0.2); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">Keine Verlaufsdaten für ${label} gefunden.</div>
+                </div>
+            `;
+        }
+
+        const validData = data.filter(d => !isNaN(parseFloat(d.state)));
+        const values = validData.map(d => parseFloat(d.state));
+        const times = validData.map(d => new Date(d.last_changed).getTime());
+
+        const minVal = Math.min(...values);
+        let maxVal = Math.max(...values);
+        if (minVal === maxVal) maxVal = minVal + 1;
+        const minTime = Math.min(...times);
+        let maxTime = Math.max(...times);
+        if (minTime === maxTime) maxTime = minTime + 1000;
+
+        const rangeY = maxVal - minVal;
+        const rangeX = maxTime - minTime;
+        const width = 600;
+        const height = 120;
+        const padding = 20;
+
+        const points = validData.map(d => {
+            const x = ((new Date(d.last_changed).getTime() - minTime) / rangeX) * width;
+            const y = height - (((parseFloat(d.state) - minVal) / rangeY) * height);
+            return `${x},${y}`;
+        });
+
+        const pathData = `M ${points[0]} L ${points.join(' L ')}`;
+        const fillPathData = `M ${points[0].split(',')[0]},${height} L ${points.join(' L ')} L ${points[points.length - 1].split(',')[0]},${height} Z`;
+        const safeId = entityId.replace(/\./g, '_');
+
+        const lastState = validData[validData.length - 1].state;
+
+        return `
+            <div class="chart-row" data-entity="${entityId}" style="margin-bottom: 20px; text-align: left; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px;">
+                    <h4 style="color: ${colorHex}; margin: 0; font-size: 1.0em; text-transform: uppercase;">${label}</h4>
+                    <span style="color: #fff; font-size: 1.1em; font-weight: bold;">
+                        ${lastState} ${unit}
+                    </span>
+                </div>
+                <div style="position: relative; height: ${height + padding * 2}px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
+                    <svg viewBox="0 -${padding} ${width} ${height + padding * 2}" preserveAspectRatio="none" style="width: 100%; height: 100%; display: block;">
+                        <defs>
+                            <linearGradient id="grad_${safeId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" style="stop-color:${colorHex};stop-opacity:0.4" />
+                                <stop offset="100%" style="stop-color:${colorHex};stop-opacity:0.0" />
+                            </linearGradient>
+                        </defs>
+                        <path d="${fillPathData}" fill="url(#grad_${safeId})" />
+                        <path d="${pathData}" fill="none" stroke="${colorHex}" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position: absolute; top: 10px; left: 10px; color: rgba(255,255,255,0.8); font-size: 0.8em; font-weight: bold;">
+                        MAX: ${maxVal.toFixed(2)}
+                    </div>
+                    <div style="position: absolute; bottom: 10px; left: 10px; color: rgba(255,255,255,0.4); font-size: 0.8em;">
+                        MIN: ${minVal.toFixed(2)}
+                    </div>
+                </div>
+            </div >
+            `;
+    }
+
+    _renderStatistics(container) {
+        if (!this._devices || this._devices.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-secondary);">Keine Grow Box gefunden. Bitte Integration hinzufügen.</div>';
+            return;
+        }
+
+        const statsDiv = document.createElement('div');
+        statsDiv.innerHTML = `
+            <div style="max-width:1200px; margin:0 auto; padding:16px;">
+                <h2 style="color:var(--text-primary); margin-bottom:12px;">📊 Statistiken & Graphen</h2>
+                <p style="color:var(--text-secondary); margin-bottom:24px;">Übersicht über die Messwerte deiner Growbox im zeitlichen Verlauf (24h).</p>
+                <div class="grid" id="stats-grid"></div>
+            </div>
+        `;
+
+        const grid = statsDiv.querySelector('#stats-grid');
+
+        this._devices.forEach(device => {
+            const tempSensor = device.options.temp_sensor;
+            const humSensor = device.options.humidity_sensor;
+            const vpdSensor = device.entities.vpd;
+            const moistSensor = device.options.moisture_sensor;
+
+            if (!tempSensor && !humSensor && !vpdSensor && !moistSensor) {
+                return;
+            }
+
+            const getUnit = (entityId, deflt) => {
+                if (!entityId || !this._hass || !this._hass.states[entityId]) return deflt;
+                return this._hass.states[entityId].attributes.unit_of_measurement || deflt;
+            };
+
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'card';
+            cardWrapper.style.padding = '24px';
+            cardWrapper.style.display = 'block';
+
+            cardWrapper.innerHTML = `
+                <div style="border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 20px;">
+                    <h3 style="margin:0; font-size:20px; color:#38bdf8;">${device.name}</h3>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    ${tempSensor ? this._renderChart(tempSensor, '#ef4444', '🌡️ Temperatur', getUnit(tempSensor, '°C')) : ''}
+                    ${humSensor ? this._renderChart(humSensor, '#3b82f6', '💧 Luftfeuchte', getUnit(humSensor, '%')) : ''}
+                    ${vpdSensor ? this._renderChart(vpdSensor, '#10b981', '🍃 VPD', getUnit(vpdSensor, 'kPa')) : ''}
+                    ${moistSensor ? this._renderChart(moistSensor, '#8b5cf6', '🪴 Bodenfeuchte', getUnit(moistSensor, '%')) : ''}
+                </div>
+                <div style="margin-top: 20px; text-align: left; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                    <h4 style="margin: 0; color: var(--text-secondary); font-size: 0.85em;">Klicke auf einen Graphen, um die detaillierte Ansicht von Home Assistant zu öffnen.</h4>
+                </div>
+            `;
+
+            // Attach listeners
+            const charts = cardWrapper.querySelectorAll('.chart-row');
+            charts.forEach(c => {
+                c.onclick = () => this._showMoreInfo(c.dataset.entity);
+            });
+
+            grid.appendChild(cardWrapper);
+        });
+
+        container.appendChild(statsDiv);
+    }
 }
 
 customElements.define('local-grow-box-panel', LocalGrowBoxPanel);

@@ -5,6 +5,7 @@ import logging
 import datetime
 import math
 import os
+import json
 import base64
 import voluptuous as vol
 from datetime import timedelta
@@ -58,12 +59,64 @@ class GrowBoxManager:
         self.vpd = 0.0
         self.pump_start_time = None
         self.last_pump_stop_time = dt_util.now()
+        
+        self.logs = []
+        self._last_log_state = {}
+        self._log_file_path = hass.config.path(f".storage", f"local_grow_box_logs_{self.entry.entry_id}.json")
+        self._load_logs()
+
+    def _load_logs(self):
+        """Load logs from file."""
+        if os.path.exists(self._log_file_path):
+            try:
+                with open(self._log_file_path, "r", encoding="utf-8") as f:
+                    self.logs = json.load(f)
+                    
+                    # Reconstruct last state from history
+                    # We reverse so we process oldest -> newest (self.logs has newest at index 0)
+                    for log in reversed(self.logs):
+                        try:
+                            msg = log.split("] ", 1)[-1]
+                            prefix = msg.split(" (")[0]
+                            category = prefix.split(" ")[0]
+                            self._last_log_state[category] = prefix
+                        except Exception:
+                            pass
+            except Exception as e:
+                _LOGGER.error("Failed to load Local Grow Box logs: %s", e)
+
+    def _save_logs(self):
+        """Save logs to file."""
+        try:
+            with open(self._log_file_path, "w", encoding="utf-8") as f:
+                json.dump(self.logs, f)
+        except Exception as e:
+            pass # avoid spamming if permissions fail
+
+    def add_log(self, message: str):
+        """Add a log entry with timestamp."""
+        prefix = message.split(" (")[0]
+        category = prefix.split(" ")[0]
+        
+        # Deduplication check
+        if self._last_log_state.get(category) == prefix:
+            return  # Same action already logged recently
+            
+        self._last_log_state[category] = prefix
+
+        timestamp = dt_util.now().strftime("%d.%m.%Y %H:%M:%S")
+        self.logs.insert(0, f"[{timestamp}] {message}")
+        
+        if len(self.logs) > 1000:
+            self.logs.pop()
+            
+        self.hass.async_create_task(self.hass.async_add_executor_job(self._save_logs))
 
     async def async_setup(self):
         """Setup background tasks."""
-        # Check more frequently (5s) to handle pump duration accurately
+        # Check more frequently (1s) to handle pump duration accurately
         self._remove_update_listener = async_track_time_interval(
-            self.hass, self._async_update_logic, timedelta(seconds=5)
+            self.hass, self._async_update_logic, timedelta(seconds=1)
         )
         self.hass.async_create_task(self._async_update_logic(dt_util.now()))
 
@@ -122,6 +175,116 @@ class GrowBoxManager:
             await self._async_update_water_logic(now)
         except Exception as e:
             _LOGGER.error("Error in Water Logic: %s", e)
+
+        # Update Display Logic
+        try:
+            await self._async_update_display_logic()
+        except Exception as e:
+            _LOGGER.error("Error in Display Logic: %s", e)
+
+    async def _async_update_display_logic(self):
+        """Send current state to ESPHome Display"""
+        # Find all display services available
+        esphome_services = self.hass.services.async_services().get("esphome", {})
+        
+        # We look for the base service name of ANY connected display (ignoring the _update_room_X suffix)
+        basenames = set()
+        for s in esphome_services:
+            if "growbox_display" in s and "_update_room_" in s:
+                basename = s.rsplit("_update_room_", 1)[0]
+                basenames.add(basename)
+                
+        if not basenames:
+             return
+             
+        # Determine the "Room ID" (1 to 5) for THIS specific Grow Box instance
+        # We do this by sorting all configured Local Grow Box entries by their creation/ID
+        # so they always get the same slot on the display
+        all_entries = self.hass.config_entries.async_entries(DOMAIN)
+        # Sort by entry_id to keep the assignment semi-stable
+        all_entries.sort(key=lambda x: x.entry_id)
+        
+        room_index = 1
+        for i, entry in enumerate(all_entries):
+            if entry.entry_id == self.entry.entry_id:
+                room_index = i + 1
+                break
+                
+        # If a user has more than 5 boxes, cap it at 5 since our display only supports 5 pages
+        if room_index > 5:
+            room_index = 5
+            
+        target_service_suffix = f"_update_room_{room_index}"
+             
+        # Gather all current data
+        # Use the name the user gave this Grow Box integration instance
+        name = self.entry.title if self.entry and self.entry.title else f"Grow Box {room_index}"
+        if len(name) > 13:
+            name = name[:10] + "..."
+
+        # Temp
+        temp_entity = self.config.get(CONF_TEMP_SENSOR)
+        temp_state = self._get_safe_state(temp_entity)
+        temp_val = "--.-"
+        if temp_state:
+            try:
+                temp_val = f"{float(temp_state.state):.1f}"
+            except ValueError:
+                temp_val = str(temp_state.state)
+
+        # Hum
+        hum_entity = self.config.get(CONF_HUMIDITY_SENSOR)
+        hum_state = self._get_safe_state(hum_entity)
+        hum_val = "--"
+        if hum_state:
+            try:
+                hum_val = f"{float(hum_state.state):.1f}"
+                if hum_val.endswith(".0"):
+                    hum_val = hum_val[:-2]
+            except ValueError:
+                hum_val = str(hum_state.state)
+
+        # Soil
+        soil_entity = self.config.get(CONF_MOISTURE_SENSOR)
+        soil_state = self._get_safe_state(soil_entity)
+        soil_val = "--"
+        if soil_state:
+            try:
+                soil_val = f"{float(soil_state.state):.0f}"
+            except ValueError:
+                soil_val = str(soil_state.state)
+
+        # VPD is calculated globally in manager
+        vpd_val = f"{self.vpd:.2f}" if self.vpd > 0 else "-.--"
+
+        # Light
+        light_entity = self.config.get(CONF_LIGHT_ENTITY)
+        light_state = self._get_safe_state(light_entity)
+        light_str = "Aus"
+        if light_state and light_state.state == "on":
+            light_str = "An"
+            
+        # Fan
+        fan_entity = self.config.get(CONF_FAN_ENTITY)
+        fan_state_obj = self._get_safe_state(fan_entity)
+        fan_str = "Aus"
+        if fan_state_obj and fan_state_obj.state == "on":
+            fan_str = "An"
+
+        display_data = {
+            "name": name,
+            "temp": temp_val,
+            "hum": hum_val,
+            "soil": soil_val,
+            "vpd": vpd_val,
+            "light_state": f"{light_str} ({self.current_phase})",
+            "fan_state": fan_str
+        }
+
+        # Fire and forget updating all connected screens
+        for basename in basenames:
+            service_name = f"{basename}{target_service_suffix}"
+            await self.hass.services.async_call("esphome", service_name, display_data)
 
     async def _async_update_light_logic(self, now: datetime.datetime):
         light_entity = self.config.get(CONF_LIGHT_ENTITY)
@@ -199,6 +362,7 @@ class GrowBoxManager:
                     return
 
             _LOGGER.info("Light should be ON. Turning ON.")
+            self.add_log("Licht eingeschaltet (Automatik)")
             await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": light_entity})
         elif not is_light_time and is_on:
             # Check Manual Override (Debounce 15 mins)
@@ -210,6 +374,7 @@ class GrowBoxManager:
                     return
 
             _LOGGER.info("Light should be OFF. Turning OFF.")
+            self.add_log("Licht ausgeschaltet (Automatik)")
             await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": light_entity})
 
     async def _async_update_water_logic(self, now: datetime.datetime):
@@ -236,6 +401,7 @@ class GrowBoxManager:
             
             if elapsed >= duration:
                  _LOGGER.info("Pump ran for %.1fs. Turning OFF.", elapsed)
+                 self.add_log(f"Pumpe ausgeschaltet (Lief {elapsed:.1f}s)")
                  await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": pump_entity})
                  self.last_pump_stop_time = now
                  self.pump_start_time = None
@@ -264,6 +430,7 @@ class GrowBoxManager:
                 
                 if val < target:
                      _LOGGER.info("Moisture low (%.1f < %.1f). Starting Pump.", val, target)
+                     self.add_log(f"Pumpe eingeschaltet (Bodenfeuchte {val}% < {target}%)")
                      await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": pump_entity})
                      self.pump_start_time = now
             except ValueError:
@@ -313,8 +480,10 @@ class GrowBoxManager:
              should_fan_on = is_fan_on
 
         if should_fan_on and not is_fan_on:
+             self.add_log(f"Abluft eingeschaltet (T={current_temp}°, H={current_humid}%)")
              await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": fan_entity})
         elif not should_fan_on and is_fan_on:
+             self.add_log(f"Abluft ausgeschaltet (T={current_temp}°, H={current_humid}%)")
              await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": fan_entity})
 
     def set_master_switch(self, state: bool):
@@ -334,7 +503,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         os.makedirs(img_path)
     await panel_custom.async_register_panel(
         hass, webcomponent_name="local-grow-box-panel", frontend_url_path="grow-room",
-        module_url="/local_grow_box/local-grow-box-panel.js?v=1.1",
+        module_url=f"/local_grow_box/local-grow-box-panel.js?v={int(dt_util.now().timestamp())}",
         sidebar_title="Grow Room", sidebar_icon="mdi:sprout", require_admin=False,
     )
 
@@ -344,6 +513,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:
         websocket_api.async_register_command(hass, ws_upload_image)
         websocket_api.async_register_command(hass, ws_update_config)
         websocket_api.async_register_command(hass, ws_get_config)
+        websocket_api.async_register_command(hass, ws_get_logs)
     except Exception as e:
         _LOGGER.warning("Failed to register websocket commands in async_setup (might be duplicate): %s", e)
     
@@ -357,6 +527,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         websocket_api.async_register_command(hass, ws_upload_image)
         websocket_api.async_register_command(hass, ws_update_config)
         websocket_api.async_register_command(hass, ws_get_config)
+        websocket_api.async_register_command(hass, ws_get_logs)
     except Exception:
         pass # Expected if already registered
 
@@ -486,3 +657,17 @@ async def ws_get_config(hass, connection, msg):
 
     data = {**entry.data, **entry.options}
     connection.send_result(msg["id"], {"config": data})
+
+@websocket_api.websocket_command({
+    vol.Required("type"): "local_grow_box/get_logs",
+    vol.Required("entry_id"): str,
+})
+@websocket_api.async_response
+async def ws_get_logs(hass, connection, msg):
+    """Handle get logs."""
+    entry_id = msg["entry_id"]
+    manager = hass.data[DOMAIN].get(entry_id)
+    if manager:
+        connection.send_result(msg["id"], {"logs": manager.logs})
+    else:
+        connection.send_result(msg["id"], {"logs": []})
