@@ -20,6 +20,7 @@ from .const import (
     CONF_TEMP_SENSOR,
     CONF_HUMIDITY_SENSOR,
     CONF_MOISTURE_SENSOR,
+    CONF_HUMIDIFIER_ENTITY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,6 +54,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     vol.Optional(CONF_FAN_ENTITY): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain=["switch", "fan", "input_boolean"])
+                    ),
+                    vol.Optional(CONF_HUMIDIFIER_ENTITY): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain=["switch", "input_boolean", "humidifier"])
                     ),
                     
                     # Water
@@ -118,6 +122,9 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             ),
             vol.Optional(CONF_FAN_ENTITY, description={"suggested_value": get_val(CONF_FAN_ENTITY)}): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain=["switch", "fan", "input_boolean"])
+            ),
+            vol.Optional(CONF_HUMIDIFIER_ENTITY, description={"suggested_value": get_val(CONF_HUMIDIFIER_ENTITY)}): selector.EntitySelector(
+                selector.EntitySelectorConfig(domain=["switch", "input_boolean", "humidifier"])
             ),
             vol.Optional(CONF_PUMP_ENTITY, description={"suggested_value": get_val(CONF_PUMP_ENTITY)}): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain=["switch", "input_boolean"])

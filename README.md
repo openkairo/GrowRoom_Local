@@ -2,10 +2,9 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿 (v2.1.3)
+# Local Grow Box Integration 🌿 (v2.1.4)
 
 <img width="1024" height="1536" alt="localgrow" src="https://github.com/user-attachments/assets/87bc7e9b-7643-4085-a9df-32111ebdaa5b" />
-
 
 **[🇩🇪 Deutsch](#-deutsch) | [🇬🇧 English](#-english)**
 
@@ -15,7 +14,7 @@
 
 Die **Local Grow Box** Integration verwandelt dein Home Assistant in eine vollautomatische Grow-Room-Steuerung. Sie verwaltet Lichtzyklen, Klima (VPD), Bewässerung und verfolgt die Wachstumsphasen über ein schickes, modernes Dashboard.
 
-## ✨ Hauptfunktionen (v2.1.2)
+## ✨ Hauptfunktionen (v2.1.4)
 
 ### 1. **Modernes Dashboard (Neu!)** 🖥️
 Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
@@ -29,10 +28,11 @@ Verfolge den Lebenszyklus deiner Pflanze präzise.
 -   **Automatischer Tageszähler:** Berechnet seit dem Startdatum exakt den aktuellen Tag des Grows.
 -   **Manueller Phasenwechsel:** Phase direkt im Dashboard ändern, die Automatik passt sich sofort an.
 
-### 3. **Intelligente Klimasteuerung (VPD)** 🌪️
+### 3. **Intelligente Klimasteuerung (VPD & Luftbefeuchter)** 🌪️
 -   **Echtzeit-VPD:** Automatische Berechnung des Sättigungsdefizits (VPD) aus Temperatur und Luftfeuchte.
 -   **Zielwert-Überwachung:** Das System erkennt, ob dein VPD im optimalen Bereich für die aktuelle Phase liegt.
 -   **Smarte Abluft:** Steuert den Lüfter basierend auf Schwellenwerten für Temperatur und Feuchtigkeit.
+-   **Luftbefeuchter-Unterstützung (Neu in v2.1.4):** Optionaler Luftbefeuchter kann hinzugefügt werden, um die minimale Luftfeuchtigkeit basierend auf dem Setup der Phase zu halten.
 
 ### 4. **Smarte Bewässerung & Bodenfeuchte** 💧
 -   **Bodenfeuchte-Logik:** Die Pumpe startet automatisch, wenn der eingestellte Mindestwert unterschritten wird.
@@ -77,7 +77,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 ## ⚙️ Einrichtung
 1.  **Einstellungen -> Geräte & Dienste -> Integration hinzufügen**.
 2.  Suche nach **"Local Grow Box"**.
-3.  Konfiguriere deine Entitäten (Licht, Sensoren, Pumpe).
+3.  Konfiguriere deine Entitäten (Licht, Sensoren, Pumpe, Luftbefeuchter).
 4.  Der Menüpunkt **"Grow Room"** erscheint in deiner Seitenleiste.
 
 ---
@@ -86,7 +86,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 The **Local Grow Box** integration turns your Home Assistant instance into a fully automated Grow Room controller. It manages light cycles, climate (VPD), watering, and tracks growth phases through a sleek, modern dashboard panel.
 
-## ✨ Key Features (v2.1.2)
+## ✨ Key Features (v2.1.4)
 
 ### 1. **Modern Dashboard (Improved!)** 🖥️
 A completely redesigned, dark-themed tech dashboard.
@@ -100,10 +100,11 @@ Precision-track your plant's lifecycle.
 -   **Automated Day Counter:** Shows exact day of grow since the start date.
 -   **Instant Phase Switch:** Change phases directly from the UI, automation updates immediately.
 
-### 3. **Smart Climate & VPD** 🌪️
+### 3. **Smart Climate & VPD (w/ Humidifier Support)** 🌪️
 -   **Real-time VPD:** Calculated from Temp and Rh to ensure optimal transpiration.
 -   **Target Range Monitoring:** Visual indicators show if your VPD is optimal for the current phase.
 -   **Intelligent Ventilation:** Controls your exhaust fan based on temperature and humidity thresholds.
+-   **Humidifier Support (New in v2.1.4):** Optional humidifier integration to maintain minimum humidity values based on phase configuration.
 
 ### 4. **Smart Irrigation** 💧
 -   **Moisture Trigger:** Pump starts automatically when soil moisture drops below your target.
@@ -134,14 +135,14 @@ Manage multiple grow tents in one place.
 
 ### Option 1: HACS (Recommended)
 1.  Open **HACS** -> **Custom repositories**.
-2.  Add: `https://github.com/lopenkairo/GrowRoom_Local` (Category: **Integration**).
+2.  Add: `https://github.com/openkairo/GrowRoom_Local` (Category: **Integration**).
 3.  Install **"Local Grow Box"**.
 4.  **Restart** Home Assistant.
 
 ## ⚙️ Setup
 1.  Go to **Settings -> Devices & Services -> Add Integration**.
 2.  Search for **"Local Grow Box"**.
-3.  Map your entities (Switch, Sensors, Camera).
+3.  Map your entities (Switch, Sensors, Camera, Humidifier).
 4.  Look for **"Grow Room"** in your sidebar.
 
 ---

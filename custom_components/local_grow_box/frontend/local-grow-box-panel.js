@@ -666,11 +666,21 @@ class LocalGrowBoxPanel extends HTMLElement {
                             </div>
                         </div>
                         
-                         <div class="info-box">
+                        ${device.options.pump_entity ? `
+                        <div class="info-box">
                             <div class="info-icon">${pumpState?.state === 'on' ? '💧' : '⛔'}</div>
                             <div class="info-content">
                                 <div class="info-label">Pumpe</div>
                                 <div class="info-val">${pumpState?.state === 'on' ? 'Läuft' : 'Aus'}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                         <div class="info-box" ${!device.options.humidifier_entity ? 'style="opacity:0.4;"' : ''}>
+                            <div class="info-icon">${this._hass.states[device.options.humidifier_entity]?.state === 'on' ? '💦' : '🌫️'}</div>
+                            <div class="info-content">
+                                <div class="info-label">Befeuchter</div>
+                                <div class="info-val">${this._hass.states[device.options.humidifier_entity]?.state === 'on' ? 'An' : 'Aus'}</div>
                             </div>
                         </div>
                     </div>
@@ -680,9 +690,11 @@ class LocalGrowBoxPanel extends HTMLElement {
                     <button class="btn ${masterState?.state === 'on' ? 'active' : ''}" id="btn-master-${device.id}">
                         ⚡ Master
                     </button>
+                    ${device.options.pump_entity ? `
                     <button class="btn ${pumpState?.state === 'on' ? 'active' : ''}" id="btn-pump-${device.id}">
                         💧 Pumpe
                     </button>
+                    ` : ''}
                     <button class="btn" id="btn-upload-${device.id}">
                         📷 Bild
                     </button>
@@ -692,7 +704,8 @@ class LocalGrowBoxPanel extends HTMLElement {
             // Events
             const q = s => card.querySelector(s);
             q(`#btn-master-${device.id}`).onclick = () => this._toggle(device.entities.master);
-            q(`#btn-pump-${device.id}`).onclick = () => this._hass.callService('homeassistant', 'toggle', { entity_id: device.entities.pump || device.options.pump_entity });
+            const btnPump = q(`#btn-pump-${device.id}`);
+            if (btnPump) btnPump.onclick = () => this._hass.callService('homeassistant', 'toggle', { entity_id: device.entities.pump || device.options.pump_entity });
             q(`#btn-upload-${device.id}`).onclick = () => this._triggerUpload(device.id);
             q('.card-image').style.cursor = 'pointer';
             q('.card-image').onclick = (e) => {
@@ -987,7 +1000,9 @@ class LocalGrowBoxPanel extends HTMLElement {
             appendSelector(col1, 'Temp. Sensor', 'temp_sensor', ['sensor']);
             appendSelector(col1, 'Luftfeuchte Sensor', 'humidity_sensor', ['sensor']);
             appendSelector(col1, 'Abluft Ventilator', 'fan_entity', ['switch', 'fan', 'input_boolean']);
+            appendSelector(col1, 'Luftbefeuchter', 'humidifier_entity', ['switch', 'input_boolean', 'humidifier']);
             appendInput(col1, 'Ziel Temperatur (°C)', 'target_temp', 'number');
+            appendInput(col1, 'Min. Feuchte (%)', 'min_humidity', 'number');
             appendInput(col1, 'Max. Feuchte (%)', 'max_humidity', 'number');
 
             // Col 2

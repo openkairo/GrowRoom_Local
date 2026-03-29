@@ -17,10 +17,12 @@ from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.components import panel_custom, websocket_api
+from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     DOMAIN, CONF_LIGHT_ENTITY, CONF_FAN_ENTITY, CONF_TEMP_SENSOR, CONF_HUMIDITY_SENSOR,
     CONF_TARGET_TEMP, CONF_MAX_HUMIDITY, DEFAULT_TARGET_TEMP, DEFAULT_MAX_HUMIDITY,
+    CONF_HUMIDIFIER_ENTITY, CONF_MIN_HUMIDITY, DEFAULT_MIN_HUMIDITY,
     PHASE_LIGHT_HOURS, PHASE_VEGETATIVE, CONF_PHASE_SEEDLING_HOURS, CONF_PHASE_VEGETATIVE_HOURS,
     CONF_PHASE_FLOWERING_HOURS, CONF_PHASE_DRYING_HOURS, CONF_PHASE_CURING_HOURS,
     CONF_CUSTOM1_NAME, CONF_CUSTOM1_HOURS, CONF_CUSTOM2_NAME, CONF_CUSTOM2_HOURS,
@@ -64,6 +66,7 @@ class GrowBoxManager:
         self._last_log_state = {}
         self._log_file_path = hass.config.path(f".storage", f"local_grow_box_logs_{self.entry.entry_id}.json")
         self._load_logs()
+        self._last_display_update = None
 
     def _load_logs(self):
         """Load logs from file."""
@@ -176,9 +179,12 @@ class GrowBoxManager:
         except Exception as e:
             _LOGGER.error("Error in Water Logic: %s", e)
 
-        # Update Display Logic
+        # Update Display Logic - Throttle to every 5 seconds
         try:
-            await self._async_update_display_logic()
+            now_utc = dt_util.utcnow()
+            if self._last_display_update is None or (now_utc - self._last_display_update).total_seconds() >= 5:
+                await self._async_update_display_logic()
+                self._last_display_update = now_utc
         except Exception as e:
             _LOGGER.error("Error in Display Logic: %s", e)
 
@@ -284,7 +290,12 @@ class GrowBoxManager:
         # Fire and forget updating all connected screens
         for basename in basenames:
             service_name = f"{basename}{target_service_suffix}"
-            await self.hass.services.async_call("esphome", service_name, display_data)
+            try:
+                await self.hass.services.async_call("esphome", service_name, display_data)
+            except HomeAssistantError as err:
+                _LOGGER.debug("Failed to update display %s: %s", service_name, err)
+            except Exception as err:
+                _LOGGER.error("Unexpected error updating display %s: %s", service_name, err)
 
     async def _async_update_light_logic(self, now: datetime.datetime):
         light_entity = self.config.get(CONF_LIGHT_ENTITY)
@@ -446,6 +457,8 @@ class GrowBoxManager:
 
         target_temp = self._get_config_value(CONF_TARGET_TEMP, DEFAULT_TARGET_TEMP, float)
         max_humidity = self._get_config_value(CONF_MAX_HUMIDITY, DEFAULT_MAX_HUMIDITY, float)
+        min_humidity = self._get_config_value(CONF_MIN_HUMIDITY, DEFAULT_MIN_HUMIDITY, float)
+        humidifier_entity = self.config.get(CONF_HUMIDIFIER_ENTITY)
 
         temp_state = self._get_safe_state(temp_entity)
         humid_state = self._get_safe_state(humid_entity)
@@ -485,6 +498,31 @@ class GrowBoxManager:
         elif not should_fan_on and is_fan_on:
              self.add_log(f"Abluft ausgeschaltet (T={current_temp}°, H={current_humid}%)")
              await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": fan_entity})
+
+        # Humidifier Logic
+        if not humidifier_entity:
+            return
+
+        humidifier_state = self._get_safe_state(humidifier_entity)
+        if not humidifier_state:
+            return
+
+        is_humidifier_on = humidifier_state.state == "on"
+        should_humidifier_on = False
+
+        if current_humid < min_humidity:
+            should_humidifier_on = True
+        elif current_humid > (min_humidity + 5.0):
+            should_humidifier_on = False
+        else:
+            should_humidifier_on = is_humidifier_on
+
+        if should_humidifier_on and not is_humidifier_on:
+            self.add_log(f"Luftbefeuchter eingeschaltet (H={current_humid}%)")
+            await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": humidifier_entity})
+        elif not should_humidifier_on and is_humidifier_on:
+            self.add_log(f"Luftbefeuchter ausgeschaltet (H={current_humid}%)")
+            await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": humidifier_entity})
 
     def set_master_switch(self, state: bool):
         self.master_switch_on = state
