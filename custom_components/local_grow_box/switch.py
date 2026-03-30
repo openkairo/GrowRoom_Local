@@ -29,6 +29,9 @@ from .const import (
     DEFAULT_LIGHT_START_HOUR,
     DEFAULT_TARGET_TEMP,
     DEFAULT_MAX_HUMIDITY,
+    CONF_HUMIDIFIER_ENTITY,
+    CONF_MIN_HUMIDITY,
+    DEFAULT_MIN_HUMIDITY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -44,6 +47,9 @@ async def async_setup_entry(
     
     if manager.config.get(CONF_PUMP_ENTITY):
         entities.append(GrowBoxPumpSwitch(hass, manager, entry.entry_id))
+        
+    if manager.config.get(CONF_HUMIDIFIER_ENTITY):
+        entities.append(GrowBoxHumidifierSwitch(hass, manager, entry.entry_id))
         
     async_add_entities(entities)
 
@@ -89,6 +95,8 @@ class GrowBoxMasterSwitch(SwitchEntity, RestoreEntity):
             "light_start_hour": self.manager.config.get(CONF_LIGHT_START_HOUR, DEFAULT_LIGHT_START_HOUR),
             "target_temp": self.manager.config.get(CONF_TARGET_TEMP, DEFAULT_TARGET_TEMP),
             "max_humidity": self.manager.config.get(CONF_MAX_HUMIDITY, DEFAULT_MAX_HUMIDITY),
+            "min_humidity": self.manager.config.get(CONF_MIN_HUMIDITY, DEFAULT_MIN_HUMIDITY),
+            "humidifier_entity": self.manager.config.get(CONF_HUMIDIFIER_ENTITY),
             "phase_start_date": self.manager.phase_start_date.isoformat() if self.manager.phase_start_date else None,
             "days_in_phase": self.manager.days_in_phase,
         }
@@ -180,4 +188,65 @@ class GrowBoxPumpSwitch(SwitchEntity, RestoreEntity):
             
         self.async_on_remove(
              async_track_state_change_event(self.hass, [self._pump_entity], update_listener)
+        )
+
+class GrowBoxHumidifierSwitch(SwitchEntity, RestoreEntity):
+    """Representation of the Humidifier Switch."""
+
+    _attr_has_entity_name = True
+    _attr_name = "Humidifier"
+    _attr_icon = "mdi:air-humidifier"
+
+    def __init__(self, hass, manager, entry_id):
+        """Initialize the switch."""
+        self.hass = hass
+        self.manager = manager
+        self._entry_id = entry_id
+        self._attr_unique_id = f"{entry_id}_humidifier_switch"
+        self._humidifier_entity = manager.config[CONF_HUMIDIFIER_ENTITY]
+        self._is_on = False
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return the device info."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self._entry_id)},
+            name=self.manager.entry.title,
+            manufacturer="Local Grow Box",
+            model="Grow Box Controller",
+        )
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if switch is on."""
+        # Query actual entity state
+        state = self.hass.states.get(self._humidifier_entity)
+        if state:
+            # More robust check for humidifier domain or switches
+            return state.state not in ["off", "unavailable", "unknown"]
+        return False
+
+    async def async_turn_on(self, **kwargs) -> None:
+        """Turn the switch on."""
+        await self.hass.services.async_call(
+            "homeassistant", "turn_on", {"entity_id": self._humidifier_entity}
+        )
+        self.async_write_ha_state()
+
+    async def async_turn_off(self, **kwargs) -> None:
+        """Turn the switch off."""
+        await self.hass.services.async_call(
+            "homeassistant", "turn_off", {"entity_id": self._humidifier_entity}
+        )
+        self.async_write_ha_state()
+
+    async def async_added_to_hass(self):
+        """Register callbacks."""
+        from homeassistant.helpers.event import async_track_state_change_event
+        
+        async def update_listener(event):
+            self.async_write_ha_state()
+            
+        self.async_on_remove(
+             async_track_state_change_event(self.hass, [self._humidifier_entity], update_listener)
         )

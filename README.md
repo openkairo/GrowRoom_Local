@@ -2,7 +2,7 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿 (v2.1.4)
+# Local Grow Box Integration 🌿 (v2.1.5)
 
 <img width="1024" height="1536" alt="localgrow" src="https://github.com/user-attachments/assets/87bc7e9b-7643-4085-a9df-32111ebdaa5b" />
 
@@ -14,7 +14,7 @@
 
 Die **Local Grow Box** Integration verwandelt dein Home Assistant in eine vollautomatische Grow-Room-Steuerung. Sie verwaltet Lichtzyklen, Klima (VPD), Bewässerung und verfolgt die Wachstumsphasen über ein schickes, modernes Dashboard.
 
-## ✨ Hauptfunktionen (v2.1.4)
+## ✨ Hauptfunktionen (v2.1.5)
 
 ### 1. **Modernes Dashboard (Neu!)** 🖥️
 Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
@@ -28,11 +28,9 @@ Verfolge den Lebenszyklus deiner Pflanze präzise.
 -   **Automatischer Tageszähler:** Berechnet seit dem Startdatum exakt den aktuellen Tag des Grows.
 -   **Manueller Phasenwechsel:** Phase direkt im Dashboard ändern, die Automatik passt sich sofort an.
 
-### 3. **Intelligente Klimasteuerung (VPD & Luftbefeuchter)** 🌪️
--   **Echtzeit-VPD:** Automatische Berechnung des Sättigungsdefizits (VPD) aus Temperatur und Luftfeuchte.
--   **Zielwert-Überwachung:** Das System erkennt, ob dein VPD im optimalen Bereich für die aktuelle Phase liegt.
 -   **Smarte Abluft:** Steuert den Lüfter basierend auf Schwellenwerten für Temperatur und Feuchtigkeit.
--   **Luftbefeuchter-Unterstützung (Neu in v2.1.4):** Optionaler Luftbefeuchter kann hinzugefügt werden, um die minimale Luftfeuchtigkeit basierend auf dem Setup der Phase zu halten.
+-   **Intelligenter Befeuchter-Impuls (Neu in v2.1.5):** Konfigurierbare Laufzeit mit automatischer **10 Minuten Pause** zur optimalen Feuchtigkeitsverteilung (verhindert Sensor-Lag-Probleme).
+-   **Visuelle Zielzonen:** Das Dashboard zeigt nun grafisch den optimalen Feuchtigkeitsbereich (+/- 5%) direkt im Balken an.
 
 ### 4. **Smarte Bewässerung & Bodenfeuchte** 💧
 -   **Bodenfeuchte-Logik:** Die Pumpe startet automatisch, wenn der eingestellte Mindestwert unterschritten wird.
@@ -56,7 +54,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 ### 8. **Detaillierte Statistiken & Logs** 📊
 -   **24h-Graphen:** Verfolge Temperatur, Feuchtigkeit und VPD im zeitlichen Verlauf direkt im Dashboard.
--   **Ereignis-Protokoll:** Eine saubere Liste aller Automatik-Aktionen (Licht an/aus, Pumpe gestartet etc.).
+-   **Ereignis-Protokoll (Verbessert in v2.1.5):** Ein flackerfreies, überarbeitetes Log-Design mit manuellem Refresh-Button und Smart-Icons.
 
 ---
 
@@ -86,7 +84,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 The **Local Grow Box** integration turns your Home Assistant instance into a fully automated Grow Room controller. It manages light cycles, climate (VPD), watering, and tracks growth phases through a sleek, modern dashboard panel.
 
-## ✨ Key Features (v2.1.4)
+## ✨ Key Features (v2.1.5)
 
 ### 1. **Modern Dashboard (Improved!)** 🖥️
 A completely redesigned, dark-themed tech dashboard.
@@ -100,11 +98,9 @@ Precision-track your plant's lifecycle.
 -   **Automated Day Counter:** Shows exact day of grow since the start date.
 -   **Instant Phase Switch:** Change phases directly from the UI, automation updates immediately.
 
-### 3. **Smart Climate & VPD (w/ Humidifier Support)** 🌪️
--   **Real-time VPD:** Calculated from Temp and Rh to ensure optimal transpiration.
--   **Target Range Monitoring:** Visual indicators show if your VPD is optimal for the current phase.
 -   **Intelligent Ventilation:** Controls your exhaust fan based on temperature and humidity thresholds.
--   **Humidifier Support (New in v2.1.4):** Optional humidifier integration to maintain minimum humidity values based on phase configuration.
+-   **Smart Humidifier Pulse (New in v2.1.5):** Set a specific run duration followed by a **10-minute soak period** for perfect moisture distribution and sensor stability.
+-   **Target Visualization:** The UI now highlights the optimal humidity range (+/- 5%) directly on the status bar.
 
 ### 4. **Smart Irrigation** 💧
 -   **Moisture Trigger:** Pump starts automatically when soil moisture drops below your target.
@@ -127,7 +123,7 @@ Manage multiple grow tents in one place.
 
 ### 8. **Statistics & Event Log** 📊
 -   **History Charts:** 24-hour graphs for all critical telemetry.
--   **Action Log:** A detailed log of all automated actions (lights, irrigation, ventilation).
+-   **Action Log (Improved in v2.1.5):** A flicker-free, redesigned log tab with manual refresh and distinct activity icons.
 
 ---
 
