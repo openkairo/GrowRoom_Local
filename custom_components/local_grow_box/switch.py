@@ -32,6 +32,8 @@ from .const import (
     CONF_HUMIDIFIER_ENTITY,
     CONF_MIN_HUMIDITY,
     DEFAULT_MIN_HUMIDITY,
+    CONF_HUMIDITY_HYSTERESIS,
+    DEFAULT_HUMIDITY_HYSTERESIS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -95,7 +97,8 @@ class GrowBoxMasterSwitch(SwitchEntity, RestoreEntity):
             "light_start_hour": self.manager.config.get(CONF_LIGHT_START_HOUR, DEFAULT_LIGHT_START_HOUR),
             "target_temp": self.manager.config.get(CONF_TARGET_TEMP, DEFAULT_TARGET_TEMP),
             "max_humidity": self.manager.config.get(CONF_MAX_HUMIDITY, DEFAULT_MAX_HUMIDITY),
-            "min_humidity": self.manager.config.get(CONF_MIN_HUMIDITY, DEFAULT_MIN_HUMIDITY),
+            "target_humidity": self.manager.config.get(CONF_TARGET_HUMIDITY, DEFAULT_TARGET_HUMIDITY),
+            "humidity_hysteresis": self.manager.config.get(CONF_HUMIDITY_HYSTERESIS, DEFAULT_HUMIDITY_HYSTERESIS),
             "humidifier_entity": self.manager.config.get(CONF_HUMIDIFIER_ENTITY),
             "phase_start_date": self.manager.phase_start_date.isoformat() if self.manager.phase_start_date else None,
             "days_in_phase": self.manager.days_in_phase,

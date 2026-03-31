@@ -2,7 +2,7 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿 (v2.1.5)
+# Local Grow Box Integration 🌿 (v2.1.6)
 
 <img width="1024" height="1536" alt="localgrow" src="https://github.com/user-attachments/assets/87bc7e9b-7643-4085-a9df-32111ebdaa5b" />
 
@@ -14,7 +14,7 @@
 
 Die **Local Grow Box** Integration verwandelt dein Home Assistant in eine vollautomatische Grow-Room-Steuerung. Sie verwaltet Lichtzyklen, Klima (VPD), Bewässerung und verfolgt die Wachstumsphasen über ein schickes, modernes Dashboard.
 
-## ✨ Hauptfunktionen (v2.1.5)
+## ✨ Hauptfunktionen (v2.1.6)
 
 ### 1. **Modernes Dashboard (Neu!)** 🖥️
 Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
@@ -54,7 +54,11 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 ### 8. **Detaillierte Statistiken & Logs** 📊
 -   **24h-Graphen:** Verfolge Temperatur, Feuchtigkeit und VPD im zeitlichen Verlauf direkt im Dashboard.
--   **Ereignis-Protokoll (Verbessert in v2.1.5):** Ein flackerfreies, überarbeitetes Log-Design mit manuellem Refresh-Button und Smart-Icons.
+-   **Ereignis-Protokoll:** Ein flackerfreies Log-Design mit manuellem Refresh-Button und Smart-Icons.
+
+### 9. **Dashboard-Stabilität & Performance (Neu in v2.1.6)** 🛡️
+-   **Optimiertes Rendering:** Das Dashboard rechnet nun deutlich effizienter. Statische Tabs (wie Hilfe oder Einstellungen) werden nicht mehr bei jedem Sensor-Update im Hintergrund neu aufgebaut.
+-   **Fix für Panel-Abstürze:** Behebt das Problem, bei dem das Dashboard nach längerer Laufzeit im Browser "verschwinden" konnte.
 
 ---
 
@@ -84,7 +88,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 The **Local Grow Box** integration turns your Home Assistant instance into a fully automated Grow Room controller. It manages light cycles, climate (VPD), watering, and tracks growth phases through a sleek, modern dashboard panel.
 
-## ✨ Key Features (v2.1.5)
+## ✨ Key Features (v2.1.6)
 
 ### 1. **Modern Dashboard (Improved!)** 🖥️
 A completely redesigned, dark-themed tech dashboard.
@@ -123,7 +127,11 @@ Manage multiple grow tents in one place.
 
 ### 8. **Statistics & Event Log** 📊
 -   **History Charts:** 24-hour graphs for all critical telemetry.
--   **Action Log (Improved in v2.1.5):** A flicker-free, redesigned log tab with manual refresh and distinct activity icons.
+-   **Action Log:** A flicker-free, redesigned log tab with manual refresh and distinct activity icons.
+
+### 9. **Stability & Performance (New in v2.1.6)** 🛡️
+-   **Smart Rendering:** Improved efficiency by preventing background re-renders of static tabs (Settings, Info, etc.).
+-   **Persistence Fix:** Resolves the UI "disappearing" bug caused by excessive DOM updates over long periods.
 
 ---
 

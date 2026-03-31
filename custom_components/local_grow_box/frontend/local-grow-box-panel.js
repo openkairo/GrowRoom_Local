@@ -35,20 +35,22 @@ class LocalGrowBoxPanel extends HTMLElement {
 
         // Re-render logic
         if (this._devices) {
-            // If we are in Settings or Phases, DO NOT blow away the DOM on every state update.
-            // The user is likely typing or selecting.
-            if (this._activeTab === 'settings' || this._activeTab === 'phases' || this._activeTab === 'logs') {
-                // But we MUST update the hass object on pickers so they can search
+            // Stability Fix: Only re-render 'overview' and 'statistics' on every state update.
+            // Other tabs (settings, phases, logs, info) are static or input-heavy and should NOT
+            // be wiped and re-created every time a sensor value changes in the background.
+            const persistentTabs = ['settings', 'phases', 'logs', 'info'];
+            if (persistentTabs.includes(this._activeTab)) {
+                // For dynamic elements inside persistent tabs (like entity pickers), 
+                // we still update their hass object so they stay functional.
                 if (this.shadowRoot) {
-                    this.shadowRoot.querySelectorAll('ha-entity-picker').forEach(picker => {
-                        picker.hass = this._hass;
+                    this.shadowRoot.querySelectorAll('ha-entity-picker, ha-selector').forEach(el => {
+                        el.hass = this._hass;
                     });
                 }
                 return;
             }
 
-            // In Overview, we want live updates, but maybe debounce or check logic?
-            // for now, just render is fine as it's read-only
+            // Overview and Statistics get live updates
             this._render();
         }
     }
@@ -600,9 +602,15 @@ class LocalGrowBoxPanel extends HTMLElement {
             const hum = getVal(device.options.humidity_sensor);
             const vpd = getVal(device.entities.vpd);
 
-            const minHum = parseFloat(device.options.min_humidity || 40);
-            const maxHum = parseFloat(device.options.max_humidity || 60);
-            const humTarget = { min: minHum, max: maxHum };
+            const targetHum = parseFloat(device.options.target_humidity || 65);
+            const hysteresis = parseFloat(device.options.humidity_hysteresis || 2);
+            const maxHum = parseFloat(device.options.max_humidity || 70);
+            
+            // The "Green/Target Range" for the bar is now between (Target - Hysteresis) and (Max)
+            // or just (Target - Hysteresis) and (Target)? 
+            // Usually, the plant likes the target. Let's show the range [Target-Hyst, Target] as inner target?
+            // Actually, humTarget is used for the color highlight.
+            const humTarget = { min: targetHum - hysteresis, max: targetHum };
 
             let vpdTarget = null;
             if (currentPhase === 'seedling') vpdTarget = { min: 0.4, max: 0.8 };
@@ -1033,9 +1041,9 @@ class LocalGrowBoxPanel extends HTMLElement {
             // Card 2: Klima-Sollwerte
             const cardKlimaValues = createCard('Klima-Sollwerte', '🎯');
             appendInput(cardKlimaValues.body, 'Ziel Temperatur (°C)', 'target_temp', 'number', '🌡️');
-            appendInput(cardKlimaValues.body, 'Min. Feuchte (%) (Start)', 'min_humidity', 'number', '💧');
-            appendInput(cardKlimaValues.body, 'Max. Feuchte (%) (Stop)', 'max_humidity', 'number', '🔥');
-            appendInput(cardKlimaValues.body, 'Befeuchter Laufzeit (Sek)', 'humidifier_duration', 'number', '⏱️');
+            appendInput(cardKlimaValues.body, 'Ziel Feuchte (%)', 'target_humidity', 'number', '🎯');
+            appendInput(cardKlimaValues.body, 'Feuchte Hysterese (%)', 'humidity_hysteresis', 'number', '🔄');
+            appendInput(cardKlimaValues.body, 'Abluft-Limit (Max %)', 'max_humidity', 'number', '🌪️');
             settingsGrid.appendChild(cardKlimaValues.card);
 
             // Card 3: Bewässerung & Licht
@@ -1377,113 +1385,126 @@ class LocalGrowBoxPanel extends HTMLElement {
 
     _renderInfo(container) {
         container.innerHTML = `
-            <div style="max-width:800px; margin:0 auto; padding:16px;">
-                <h2 style="text-align:center; margin-bottom:24px;">Grow Guide & Hilfe</h2>
+            <div style="max-width:900px; margin:0 auto; padding:16px;">
+                <h2 style="text-align:center; margin-bottom:32px; background: linear-gradient(135deg, #4ade80 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; font-size: 28px;">
+                    Grow Guide & Hilfe-Center
+                </h2>
                 
-                <div class="card" style="margin-bottom:24px;">
-                    <div class="card-header">
-                        <div class="card-title">🍃 VPD (Vapor Pressure Deficit)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px;">
+                    <!-- VPD Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🍃 VPD (Vapor Pressure Deficit)</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="color:var(--text-secondary); margin-bottom:16px; font-size: 13px; line-height: 1.5;">
+                                Der VPD-Wert beschreibt den Dampfdrucksättigungsdefizit – also wie "durstig" die Luft ist. Ein optimaler VPD sorgt dafür, dass die Pflanze Nährstoffe effizient transportieren kann.
+                            </p>
+                            <table style="width:100%; text-align:left; border-collapse:collapse; color:white; font-size: 13px;">
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
+                                    <th style="padding:8px; color: var(--primary-color);">Phase</th>
+                                    <th style="padding:8px; color: var(--primary-color);">Ziel-Bereich (kPa)</th>
+                                </tr>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:8px;">🌱 Keimling</td>
+                                    <td style="padding:8px; color:#4ade80; font-weight: 600;">0.4 - 0.8</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:8px;">🌿 Wachstum</td>
+                                    <td style="padding:8px; color:#4ade80; font-weight: 600;">0.8 - 1.2</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:8px;">🌸 Blüte</td>
+                                    <td style="padding:8px; color:#4ade80; font-weight: 600;">1.2 - 1.6</td>
+                                </tr>
+                                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                                    <td style="padding:8px;">🍂 Trocknen</td>
+                                    <td style="padding:8px; color:#4ade80; font-weight: 600;">0.8 - 1.0</td>
+                                </tr>
+                            </table>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p style="color:var(--text-secondary); margin-bottom:16px;">Der VPD-Wert beschreibt, wie gut die Pflanze transpirieren kann. Grüne Bereiche sind optimal.</p>
-                        <table style="width:100%; text-align:left; border-collapse:collapse; color:white;">
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.1);">
-                                <th style="padding:8px;">Phase</th>
-                                <th style="padding:8px;">Optimaler Bereich (kPa)</th>
-                            </tr>
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td style="padding:8px;">🌱 Keimling</td>
-                                <td style="padding:8px; color:#4ade80;">0.4 - 0.8</td>
-                            </tr>
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td style="padding:8px;">🌿 Wachstum</td>
-                                <td style="padding:8px; color:#4ade80;">0.8 - 1.2</td>
-                            </tr>
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td style="padding:8px;">🌸 Blüte</td>
-                                <td style="padding:8px; color:#4ade80;">1.2 - 1.6</td>
-                            </tr>
-                            <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                                <td style="padding:8px;">🍂 Trocknen</td>
-                                <td style="padding:8px; color:#4ade80;">0.8 - 1.0</td>
-                            </tr>
-                            <tr>
-                                <td style="padding:8px;">🏺 Veredeln</td>
-                                <td style="padding:8px; color:#4ade80;">0.5 - 0.7</td>
-                            </tr>
-                        </table>
-                        <div style="text-align:center; padding:12px;">
-                            <span style="font-size:40px;">🥦</span>
+
+                    <!-- NEW: Smart Humidity Logic -->
+                    <div class="card" style="border-left: 4px solid #3b82f6;">
+                        <div class="card-header">
+                            <div class="card-title">💦 Intelligente Befeuchtung (Neu)</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="color:var(--text-secondary); margin-bottom:12px; font-size: 13px;">
+                                In v2.1.5 wurde die Steuerung des Luftbefeuchters optimiert, um ein Überfeuchten zu verhindern:
+                            </p>
+                            <ul style="color:var(--text-secondary); padding-left:20px; line-height:1.6; font-size: 13px;">
+                                <li><strong>Impuls-Logik:</strong> Der Befeuchter läuft für einen kurzen "Impuls" und wartet dann 10 Minuten.</li>
+                                <li><strong>Verteilung:</strong> Die Pause gibt dem Wasser Zeit, sich im Raum zu verteilen, bevor der Sensor erneut misst.</li>
+                                <li><strong>Ziel-Zone:</strong> Auf dem Dashboard zeigt der blaue Balken nun einen hellen Bereich (+/- 5%) als Zielvorgabe an.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Controls Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">🎮 Dashboard-Steuerung</div>
+                        </div>
+                        <div class="card-body">
+                            <ul style="color:var(--text-secondary); padding-left:20px; line-height:1.6; font-size: 13px;">
+                                <li><strong>⚡ Master:</strong> Automatik AN/AUS. Im AUS-Zustand werden keine Geräte automatisch geschaltet.</li>
+                                <li><strong>💦 Befeuchter:</strong> (Neu) Direkter Schalter für den Luftbefeuchter. Überschreibt kurzzeitig die Automatik.</li>
+                                <li><strong>💧 Pumpe:</strong> Startet den Gießvorgang für die eingestellte Dauer (Sekunden).</li>
+                                <li><strong>📷 Bild:</strong> Manueller Kamera-Upload für die Box-Vorschau.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Light Timer Section -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">💡 Licht & Phasen</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="color:var(--text-secondary); font-size: 13px; line-height:1.5;">
+                                Jede Phase hat ihre eigene Beleuchtungsdauer (z.B. 18h oder 12h). Diese stellst du unter <strong>"Phasen"</strong> ein.
+                                <br><br>
+                                Die <strong>Startzeit</strong> unter "Geräte & Config" legt fest, wann der "Tag" beginnt.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Watering Section -->
+                    <div class="card">
+                         <div class="card-header">
+                            <div class="card-title">🌱 Bewässerung-Logik</div>
+                        </div>
+                        <div class="card-body">
+                            <p style="color:var(--text-secondary); font-size: 13px; line-height:1.5;">
+                                Wenn die Bodenfeuchte unter den Zielwert fällt, wird die Pumpe aktiviert.
+                                <br><br>
+                                Nach jedem Gießen folgt eine <strong>15-minütige Sperre</strong>, damit das Wasser einsickern kann und der Sensor nicht sofort wieder auslöst.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Support Section -->
+                    <div class="card" style="border: 1px solid rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.05);">
+                        <div class="card-header" style="border-bottom-color: rgba(251, 191, 36, 0.1);">
+                            <div class="card-title" style="color: #fbbf24;">💛 Support & OpenKairo</div>
+                        </div>
+                        <div class="card-body" style="text-align:center;">
+                            <p style="color:var(--text-secondary); margin-bottom:16px; font-size: 13px;">
+                                Gefällt dir das Projekt? Unterstütze die Entwicklung!
+                            </p>
+                            <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR" target="_blank" style="text-decoration:none;">
+                                <button class="btn" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #111827; font-weight:bold; margin:0 auto; width:auto; padding:12px 24px; border:none; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.2);">
+                                    ☕ Jetzt Spenden
+                                </button>
+                            </a>
                         </div>
                     </div>
                 </div>
-
-                <div class="card" style="margin-bottom:24px;">
-                    <div class="card-header">
-                        <div class="card-title">🎮 Steuerung</div>
-                    </div>
-                    <div class="card-body">
-                        <p style="color:var(--text-secondary); margin-bottom:12px;">Erklärung der Buttons auf der Übersichtsseite:</p>
-                        <ul style="color:var(--text-secondary); padding-left:20px; line-height:1.6;">
-                            <li><strong>⚡ Master:</strong> Hauptschalter für die Automatik. <br>
-                                <span style="opacity:0.7; font-size:12px;">(AN = Automatik aktiv. AUS = Handbetrieb/Pause. Zustand wird gespeichert.)</span>
-                            </li>
-                            <li><strong>💧 Pumpe:</strong> Manuelles Gießen. <br>
-                                <span style="opacity:0.7; font-size:12px;">(Pumpe läuft für die eingestellte Dauer und schaltet dann automatisch ab.)</span>
-                            </li>
-                            <li><strong>📷 Bild:</strong> Lade ein aktuelles Foto deiner Box hoch.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-bottom:24px;">
-                    <div class="card-header">
-                        <div class="card-title">💡 Lichtsteuerung</div>
-                    </div>
-                    <div class="card-body">
-                        <p style="color:var(--text-secondary);">Das Licht wird basierend auf der <strong>Startzeit</strong> und der <strong>Phasendauer</strong> gesteuert.</p>
-                        <ul style="color:var(--text-secondary); padding-left:20px; margin-top:8px;">
-                            <li><strong>Startzeit:</strong> Kann unter "Geräte & Config" eingestellt werden.</li>
-                            <li><strong>Dauer:</strong> Wird durch die aktuelle Phase bestimmt (z.B. 18h Wachstum).</li>
-                            <li><strong>Manuell:</strong> Wenn du das Licht manuell ausschaltest, wartet die Automatik 10 Sekunden.</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card">
-                     <div class="card-header">
-                        <div class="card-title">💧 Bewässerung</div>
-                    </div>
-                    <div class="card-body">
-                        <p style="color:var(--text-secondary);">Die Pumpe wird aktiviert, wenn die Bodenfeuchte unter den Zielwert fällt.</p>
-                        <ul style="color:var(--text-secondary); padding-left:20px; margin-top:8px;">
-                            <li><strong>Logik:</strong> Feuchte < Zielwert → Pumpe an für X Sekunden.</li>
-                            <li><strong>Pause:</strong> Nach dem Gießen wartet das System 15 Minuten (Einwirkzeit).</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <div class="card" style="margin-top:24px; border: 1px solid rgba(251, 191, 36, 0.2);">
-                    <div class="card-header">
-                        <div class="card-title" style="color: #fbbf24;">💛 Support & Spenden</div>
-                    </div>
-                    <div class="card-body" style="text-align:center;">
-                        <p style="color:var(--text-secondary); margin-bottom:20px;">
-                            Gefällt dir das Projekt? Unterstütze die Weiterentwicklung mit einer Spende!
-                        </p>
-                        <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=info@low-streaming.de&currency_code=EUR" target="_blank" style="text-decoration:none;">
-                            <button class="btn" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #111827; font-weight:bold; margin:0 auto; width:auto; padding:12px 32px; border:none; box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);">
-                                <span style="font-size:18px; margin-right:8px;">☕</span> Jetzt Spenden
-                            </button>
-                        </a>
-                        <div style="margin-top:16px; font-size:12px; color:var(--text-secondary);">
-                            PayPal: info@low-streaming.de
-                        </div>
-                    </div>
-                </div>
                 
-                <div style="text-align:center; margin-top:32px; opacity:0.5; font-size:12px;">
-                    Local Grow Box Integration v2.1.3
+                <div style="text-align:center; margin-top:40px; opacity:0.5; font-size:12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+                    Local Grow Box Integration v2.1.6
                 </div>
             </div>
         `;

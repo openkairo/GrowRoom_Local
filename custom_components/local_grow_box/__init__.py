@@ -31,6 +31,7 @@ from .const import (
     CONF_LIGHT_START_HOUR, CONF_PHASE_START_DATE, DEFAULT_PUMP_DURATION,
     CONF_TARGET_HUMIDITY, CONF_HUMIDIFIER_DURATION, DEFAULT_TARGET_HUMIDITY, 
     DEFAULT_HUMIDIFIER_DURATION, CONF_PUMP_ENTITY, CONF_CAMERA_ENTITY,
+    CONF_HUMIDITY_HYSTERESIS, DEFAULT_HUMIDITY_HYSTERESIS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -461,6 +462,8 @@ class GrowBoxManager:
         target_temp = self._get_config_value(CONF_TARGET_TEMP, DEFAULT_TARGET_TEMP, float)
         min_humidity = self._get_config_value(CONF_MIN_HUMIDITY, DEFAULT_MIN_HUMIDITY, float)
         max_humidity = self._get_config_value(CONF_MAX_HUMIDITY, DEFAULT_MAX_HUMIDITY, float)
+        target_humidity = self._get_config_value(CONF_TARGET_HUMIDITY, DEFAULT_TARGET_HUMIDITY, float)
+        humidity_hysteresis = self._get_config_value(CONF_HUMIDITY_HYSTERESIS, DEFAULT_HUMIDITY_HYSTERESIS, float)
         
         humidifier_entity = self.config.get(CONF_HUMIDIFIER_ENTITY)
 
@@ -508,18 +511,11 @@ class GrowBoxManager:
             return
 
         is_humidifier_on = humidifier_state.state not in ["off", "unavailable", "unknown"]
-        duration = self._get_config_value(CONF_HUMIDIFIER_DURATION, DEFAULT_HUMIDIFIER_DURATION, float)
 
         if is_humidifier_on:
-             # Start tracking if not already
-             if not self.humidifier_start_time:
-                  self.humidifier_start_time = now
-             
-             elapsed = (now - self.humidifier_start_time).total_seconds()
-             
-             if elapsed >= duration:
-                  _LOGGER.info("Humidifier ran for %.1fs. Turning OFF.", elapsed)
-                  self.add_log(f"Luftbefeuchter ausgeschaltet (Lief {elapsed:.1f}s)")
+             if current_humid >= target_humidity:
+                  _LOGGER.info("Humidity reached target (%.1f >= %.1f). Turning OFF.", current_humid, target_humidity)
+                  self.add_log(f"Luftbefeuchter ausgeschaltet (H={current_humid}% >= {target_humidity}%)")
                   await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": humidifier_entity})
                   self.last_humidifier_stop_time = now
                   self.humidifier_start_time = None
@@ -534,9 +530,11 @@ class GrowBoxManager:
                        return
 
              # Sensor Check
-             if current_humid < min_humidity:
-                  _LOGGER.info("Humidity low (%.1f < %.1f). Starting Humidifier Pulse.", current_humid, min_humidity)
-                  self.add_log(f"Luftbefeuchter eingeschaltet (H={current_humid}% < {min_humidity}%)")
+             # Humidifier starts at target - hysteresis
+             start_threshold = target_humidity - humidity_hysteresis
+             if current_humid < start_threshold:
+                  _LOGGER.info("Humidity low (%.1f < %.1f). Starting Humidifier.", current_humid, start_threshold)
+                  self.add_log(f"Luftbefeuchter eingeschaltet (H={current_humid}% < {start_threshold}%)")
                   await self.hass.services.async_call("homeassistant", "turn_on", {"entity_id": humidifier_entity})
                   self.humidifier_start_time = now
 

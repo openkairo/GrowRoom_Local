@@ -13,8 +13,7 @@ CONF_MAX_HUMIDITY = "max_humidity"
 CONF_HUMIDIFIER_ENTITY = "humidifier_entity"
 CONF_MIN_HUMIDITY = "min_humidity"
 CONF_TARGET_HUMIDITY = "target_humidity"
-CONF_HUMIDIFIER_DURATION = "humidifier_duration"
-CONF_TARGET_HUMIDITY = "target_humidity"
+CONF_HUMIDITY_HYSTERESIS = "humidity_hysteresis"
 CONF_HUMIDIFIER_DURATION = "humidifier_duration"
 
 # Grow Phases
@@ -66,6 +65,7 @@ DEFAULT_PUMP_DURATION = 30
 DEFAULT_TARGET_MOISTURE = 40.0
 DEFAULT_HUMIDIFIER_DURATION = 60
 DEFAULT_TARGET_HUMIDITY = 65.0
+DEFAULT_HUMIDITY_HYSTERESIS = 2.0
 DEFAULT_LIGHT_START_HOUR = 18
 
 # Phase Defaults (Hours of Light)
