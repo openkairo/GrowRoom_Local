@@ -1504,7 +1504,7 @@ class LocalGrowBoxPanel extends HTMLElement {
                 </div>
                 
                 <div style="text-align:center; margin-top:40px; opacity:0.5; font-size:12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                    Local Grow Box Integration v2.1.6
+                    Local Grow Box Integration v2.1.7
                 </div>
             </div>
         `;

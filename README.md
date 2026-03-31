@@ -2,7 +2,7 @@
 [![github_release](https://img.shields.io/github/v/release/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/releases)
 [![github_license](https://img.shields.io/github/license/openkairo/GrowRoom_Local?style=for-the-badge)](https://github.com/openkairo/GrowRoom_Local/blob/main/LICENSE)
 
-# Local Grow Box Integration 🌿 (v2.1.6)
+# Local Grow Box Integration 🌿 (v2.1.7)
 
 <img width="1024" height="1536" alt="localgrow" src="https://github.com/user-attachments/assets/87bc7e9b-7643-4085-a9df-32111ebdaa5b" />
 
@@ -14,7 +14,7 @@
 
 Die **Local Grow Box** Integration verwandelt dein Home Assistant in eine vollautomatische Grow-Room-Steuerung. Sie verwaltet Lichtzyklen, Klima (VPD), Bewässerung und verfolgt die Wachstumsphasen über ein schickes, modernes Dashboard.
 
-## ✨ Hauptfunktionen (v2.1.6)
+## ✨ Hauptfunktionen (v2.1.7)
 
 ### 1. **Modernes Dashboard (Neu!)** 🖥️
 Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
@@ -56,7 +56,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 -   **24h-Graphen:** Verfolge Temperatur, Feuchtigkeit und VPD im zeitlichen Verlauf direkt im Dashboard.
 -   **Ereignis-Protokoll:** Ein flackerfreies Log-Design mit manuellem Refresh-Button und Smart-Icons.
 
-### 9. **Dashboard-Stabilität & Performance (Neu in v2.1.6)** 🛡️
+### 9. **Dashboard-Stabilität & Performance (Neu in v2.1.6/2.1.7)** 🛡️
 -   **Optimiertes Rendering:** Das Dashboard rechnet nun deutlich effizienter. Statische Tabs (wie Hilfe oder Einstellungen) werden nicht mehr bei jedem Sensor-Update im Hintergrund neu aufgebaut.
 -   **Fix für Panel-Abstürze:** Behebt das Problem, bei dem das Dashboard nach längerer Laufzeit im Browser "verschwinden" konnte.
 
@@ -88,7 +88,7 @@ Verwalte mehrere Zelte oder Boxen gleichzeitig.
 
 The **Local Grow Box** integration turns your Home Assistant instance into a fully automated Grow Room controller. It manages light cycles, climate (VPD), watering, and tracks growth phases through a sleek, modern dashboard panel.
 
-## ✨ Key Features (v2.1.6)
+## ✨ Key Features (v2.1.7)
 
 ### 1. **Modern Dashboard (Improved!)** 🖥️
 A completely redesigned, dark-themed tech dashboard.
@@ -129,7 +129,7 @@ Manage multiple grow tents in one place.
 -   **History Charts:** 24-hour graphs for all critical telemetry.
 -   **Action Log:** A flicker-free, redesigned log tab with manual refresh and distinct activity icons.
 
-### 9. **Stability & Performance (New in v2.1.6)** 🛡️
+### 9. **Stability & Performance (New in 2.1.6/2.1.7)** 🛡️
 -   **Smart Rendering:** Improved efficiency by preventing background re-renders of static tabs (Settings, Info, etc.).
 -   **Persistence Fix:** Resolves the UI "disappearing" bug caused by excessive DOM updates over long periods.
 
