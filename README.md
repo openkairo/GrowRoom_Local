@@ -21,6 +21,7 @@ Ein komplett überarbeitetes, dunkles Dashboard im Tech-Design.
 -   **Interaktive Tabs:** Übersicht, Statistiken, Geräte-Konfiguration, Phasen, Protokoll und Hilfe.
 -   **Live-Karten:** Dynamische Visualisierung von Temperatur, Luftfeuchte (RLF), VPD und Bodenfeuchte.
 -   **Status-Badges:** Sofortige Rückmeldung, ob das System online ist oder die Automatik pausiert wurde.
+-   **Master Kill Switch (Neu in v2.1.7):** Der Master-Schalter deaktiviert nicht nur die Automatik, sondern schaltet alle Geräte aktiv aus, solange er auf AUS steht.
 
 ### 2. **Phasen-Management & Timeline** 🌱
 Verfolge den Lebenszyklus deiner Pflanze präzise.
@@ -95,6 +96,7 @@ A completely redesigned, dark-themed tech dashboard.
 -   **Interactive Tabs:** Overview, Statistics, Device Config, Phases, Logs, and Help.
 -   **Live Data:** Real-time visualization of Temperature, Humidity, VPD, and Soil Moisture.
 -   **Visual Feedback:** High-contrast status badges for system and automation status.
+-   **Master Kill Switch (New in v2.1.7):** The Master Switch now actively turns off all devices and keeps them off while deactivated.
 
 ### 2. **Phase Management & Timeline** 🌱
 Precision-track your plant's lifecycle.

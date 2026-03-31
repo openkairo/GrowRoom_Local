@@ -163,8 +163,27 @@ class GrowBoxManager:
         except (ValueError, TypeError):
             return default
 
+    async def _async_stop_all_devices(self):
+        """Turn off all managed devices if they are currently on."""
+        entities = [
+            self.config.get(CONF_LIGHT_ENTITY),
+            self.config.get(CONF_FAN_ENTITY),
+            self.config.get(CONF_PUMP_ENTITY),
+            self.config.get(CONF_HUMIDIFIER_ENTITY),
+        ]
+        
+        for entity_id in entities:
+            if not entity_id:
+                continue
+            state = self._get_safe_state(entity_id)
+            # Use a slightly broader check for 'on' to handle various device classes
+            if state and state.state not in ["off", "unavailable", "unknown"]:
+                _LOGGER.info("Master Switch is OFF: Actively turning off %s", entity_id)
+                await self.hass.services.async_call("homeassistant", "turn_off", {"entity_id": entity_id})
+
     async def _async_update_logic(self, now: datetime.datetime):
         if not self.master_switch_on:
+            await self._async_stop_all_devices()
             return
             
         # Isolate Light Logic
