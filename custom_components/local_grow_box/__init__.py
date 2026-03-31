@@ -146,12 +146,29 @@ class GrowBoxManager:
         delta = now - start
         return max(0, delta.days)
 
-    def _get_safe_state(self, entity_id: str):
+    def _get_safe_state(self, entity_id):
         if not entity_id:
             return None
+            
         state = self.hass.states.get(entity_id)
-        if not state or state.state in ["unavailable", "unknown"]:
+        
+        # Robust check: If not found, try common domains (sensor, switch)
+        if not state and "." not in entity_id:
+            for domain in ["sensor", "switch", "binary_sensor"]:
+                test_id = f"{domain}.{entity_id}"
+                state = self.hass.states.get(test_id)
+                if state:
+                    self.config[entity_id] = test_id # Update config for next time
+                    break
+        
+        if not state:
+            _LOGGER.debug("Entity not found: %s", entity_id)
             return None
+            
+        if state.state in ["unavailable", "unknown"]:
+            _LOGGER.debug("Entity %s is %s", entity_id, state.state)
+            return None
+            
         return state
 
     def _get_config_value(self, key, default, type_func=str):
@@ -491,6 +508,8 @@ class GrowBoxManager:
         humid_state = self._get_safe_state(humid_entity)
 
         if not temp_state or not humid_state:
+             if not temp_state: _LOGGER.debug("Climate logic halted: Temp sensor %s not ready", temp_entity)
+             if not humid_state: _LOGGER.debug("Climate logic halted: Humidity sensor %s not ready", humid_entity)
              return
 
         try:
