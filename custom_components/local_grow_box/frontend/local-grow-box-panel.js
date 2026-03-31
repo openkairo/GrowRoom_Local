@@ -603,14 +603,13 @@ class LocalGrowBoxPanel extends HTMLElement {
             const vpd = getVal(device.entities.vpd);
 
             const targetHum = parseFloat(device.options.target_humidity || 65);
-            const hysteresis = parseFloat(device.options.humidity_hysteresis || 2);
-            const maxHum = parseFloat(device.options.max_humidity || 70);
+            const targetTemp = parseFloat(device.options.target_temp || 24);
+            const humHysteresis = parseFloat(device.options.humidity_hysteresis || 2);
+            const tempHysteresis = parseFloat(device.options.temp_hysteresis || 1);
             
-            // The "Green/Target Range" for the bar is now between (Target - Hysteresis) and (Max)
-            // or just (Target - Hysteresis) and (Target)? 
-            // Usually, the plant likes the target. Let's show the range [Target-Hyst, Target] as inner target?
-            // Actually, humTarget is used for the color highlight.
-            const humTarget = { min: targetHum - hysteresis, max: targetHum };
+            // Symmetric Target Zones (+/- Hysteresis)
+            const humTarget = { min: targetHum - humHysteresis, max: targetHum + humHysteresis };
+            const tempTarget = { min: targetTemp - tempHysteresis, max: targetTemp + tempHysteresis };
 
             let vpdTarget = null;
             if (currentPhase === 'seedling') vpdTarget = { min: 0.4, max: 0.8 };
@@ -655,8 +654,8 @@ class LocalGrowBoxPanel extends HTMLElement {
                 </div>
                 
                 <div class="card-body">
-                    ${this._renderStatBar('Temperatur', temp, '°C', 10, 45, '#ef4444', '🌡️')}
-                    ${this._renderStatBar('Luftfeuchte', hum, '%', 30, 80, '#3b82f6', '💧', humTarget)}
+                    ${this._renderStatBar('Temperatur', temp, '°C', 10, 45, '#ef4444', '🌡️', tempTarget)}
+                    ${this._renderStatBar('Luftfeuchte', hum, '%', 20, 90, '#3b82f6', '💧', humTarget)}
                     ${this._renderStatBar('VPD', vpd, 'kPa', 0, 3.0, '#10b981', '🍃', vpdTarget)}
                     
                     ${device.options.moisture_sensor ? this._renderStatBar('Bodenfeuchte', getVal(device.options.moisture_sensor), '%', 0, 100, '#8b5cf6', '🪴') : ''}
@@ -1041,9 +1040,11 @@ class LocalGrowBoxPanel extends HTMLElement {
             // Card 2: Klima-Sollwerte
             const cardKlimaValues = createCard('Klima-Sollwerte', '🎯');
             appendInput(cardKlimaValues.body, 'Ziel Temperatur (°C)', 'target_temp', 'number', '🌡️');
+            appendInput(cardKlimaValues.body, 'Temp Hysterese (Lüfter °C)', 'temp_hysteresis', 'number', '🌡️');
             appendInput(cardKlimaValues.body, 'Ziel Feuchte (%)', 'target_humidity', 'number', '🎯');
-            appendInput(cardKlimaValues.body, 'Feuchte Hysterese (%)', 'humidity_hysteresis', 'number', '🔄');
+            appendInput(cardKlimaValues.body, 'Feuchte Hysterese (Befeuchter %)', 'humidity_hysteresis', 'number', '🔄');
             appendInput(cardKlimaValues.body, 'Abluft-Limit (Max %)', 'max_humidity', 'number', '🌪️');
+            appendInput(cardKlimaValues.body, 'Abluft Hysterese (%)', 'fan_hysteresis', 'number', '💨');
             settingsGrid.appendChild(cardKlimaValues.card);
 
             // Card 3: Bewässerung & Licht
@@ -1437,7 +1438,7 @@ class LocalGrowBoxPanel extends HTMLElement {
                             <ul style="color:var(--text-secondary); padding-left:20px; line-height:1.6; font-size: 13px;">
                                 <li><strong>Impuls-Logik:</strong> Der Befeuchter läuft für einen kurzen "Impuls" und wartet dann 10 Minuten.</li>
                                 <li><strong>Verteilung:</strong> Die Pause gibt dem Wasser Zeit, sich im Raum zu verteilen, bevor der Sensor erneut misst.</li>
-                                <li><strong>Ziel-Zone:</strong> Auf dem Dashboard zeigt der blaue Balken nun einen hellen Bereich (+/- 5%) als Zielvorgabe an.</li>
+                                <li><strong>Ziel-Zone:</strong> Auf dem Dashboard zeigt der blaue Balken nun einen hellen Bereich basierend auf deiner eingestellten <strong>Hysterese</strong> (+/-) als Zielvorgabe an.</li>
                             </ul>
                         </div>
                     </div>
@@ -1504,7 +1505,7 @@ class LocalGrowBoxPanel extends HTMLElement {
                 </div>
                 
                 <div style="text-align:center; margin-top:40px; opacity:0.5; font-size:12px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
-                    Local Grow Box Integration v2.1.7
+                    Local Grow Box Integration v2.1.8
                 </div>
             </div>
         `;

@@ -21,6 +21,16 @@ from .const import (
     CONF_HUMIDITY_SENSOR,
     CONF_MOISTURE_SENSOR,
     CONF_HUMIDIFIER_ENTITY,
+    CONF_TARGET_TEMP,
+    CONF_TARGET_HUMIDITY,
+    CONF_HUMIDITY_HYSTERESIS,
+    CONF_TEMP_HYSTERESIS,
+    CONF_FAN_HYSTERESIS,
+    CONF_MAX_HUMIDITY,
+    CONF_PUMP_DURATION,
+    CONF_TARGET_MOISTURE,
+    CONF_LIGHT_START_HOUR,
+    CONF_PHASE_START_DATE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -135,6 +145,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional(CONF_CAMERA_ENTITY, description={"suggested_value": get_val(CONF_CAMERA_ENTITY)}): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="camera")
             ),
+            # Target Values
+            vol.Optional(CONF_TARGET_TEMP, description={"suggested_value": get_val(CONF_TARGET_TEMP)}): vol.Coerce(float),
+            vol.Optional(CONF_TARGET_HUMIDITY, description={"suggested_value": get_val(CONF_TARGET_HUMIDITY)}): vol.Coerce(float),
+            vol.Optional(CONF_HUMIDITY_HYSTERESIS, description={"suggested_value": get_val(CONF_HUMIDITY_HYSTERESIS)}): vol.Coerce(float),
+            vol.Optional(CONF_TEMP_HYSTERESIS, description={"suggested_value": get_val(CONF_TEMP_HYSTERESIS)}): vol.Coerce(float),
+            vol.Optional(CONF_FAN_HYSTERESIS, description={"suggested_value": get_val(CONF_FAN_HYSTERESIS)}): vol.Coerce(float),
+            vol.Optional(CONF_MAX_HUMIDITY, description={"suggested_value": get_val(CONF_MAX_HUMIDITY)}): vol.Coerce(float),
+            vol.Optional(CONF_TARGET_MOISTURE, description={"suggested_value": get_val(CONF_TARGET_MOISTURE)}): vol.Coerce(float),
+            vol.Optional(CONF_PUMP_DURATION, description={"suggested_value": get_val(CONF_PUMP_DURATION)}): vol.Coerce(int),
+            vol.Optional(CONF_LIGHT_START_HOUR, description={"suggested_value": get_val(CONF_LIGHT_START_HOUR)}): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+            vol.Optional(CONF_PHASE_START_DATE, description={"suggested_value": get_val(CONF_PHASE_START_DATE)}): str,
         }
 
         return self.async_show_form(

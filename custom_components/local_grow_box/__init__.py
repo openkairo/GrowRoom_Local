@@ -463,7 +463,6 @@ class GrowBoxManager:
             try:
                 val = float(state.state)
                 target = self._get_config_value(CONF_TARGET_MOISTURE, DEFAULT_TARGET_MOISTURE, float)
-                
                 if val < target:
                      _LOGGER.info("Moisture low (%.1f < %.1f). Starting Pump.", val, target)
                      self.add_log(f"Pumpe eingeschaltet (Bodenfeuchte {val}% < {target}%)")
@@ -483,6 +482,8 @@ class GrowBoxManager:
         max_humidity = self._get_config_value(CONF_MAX_HUMIDITY, DEFAULT_MAX_HUMIDITY, float)
         target_humidity = self._get_config_value(CONF_TARGET_HUMIDITY, DEFAULT_TARGET_HUMIDITY, float)
         humidity_hysteresis = self._get_config_value(CONF_HUMIDITY_HYSTERESIS, DEFAULT_HUMIDITY_HYSTERESIS, float)
+        temp_hysteresis = self._get_config_value(CONF_TEMP_HYSTERESIS, DEFAULT_TEMP_HYSTERESIS, float)
+        fan_hysteresis = self._get_config_value(CONF_FAN_HYSTERESIS, DEFAULT_FAN_HYSTERESIS, float)
         
         humidifier_entity = self.config.get(CONF_HUMIDIFIER_ENTITY)
 
@@ -509,8 +510,8 @@ class GrowBoxManager:
 
                 if current_temp > target_temp or current_humid > max_humidity:
                     should_fan_on = True
-                elif current_temp < (target_temp - 1.0) and current_humid < (max_humidity - 2.0):
-                     should_fan_on = False
+                elif current_temp < (target_temp - temp_hysteresis) and current_humid < (max_humidity - fan_hysteresis):
+                    should_fan_on = False
                 else:
                      should_fan_on = is_fan_on
 
@@ -544,9 +545,9 @@ class GrowBoxManager:
              
              # Soak Time Check (10 min)
              if self.last_humidifier_stop_time:
-                  time_off = (now - self.last_humidifier_stop_time).total_seconds()
-                  if time_off < 600: # 600s = 10 min
-                       return
+                 time_off = (now - self.last_humidifier_stop_time).total_seconds()
+                 if time_off < 600: # 600s = 10 min
+                      return
 
              # Sensor Check
              # Humidifier starts at target - hysteresis
